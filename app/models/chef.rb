@@ -17,7 +17,7 @@ class Chef < ActiveRecord::Base
   validates :avatar, presence: true
   validates :email, presence:true, uniqueness: true
   validates :description, presence: true, length: {in:10...250}
-  #validates :type, inclusion: cookers.keys
+  validates :type, inclusion: cookers.keys
   validates :expertise, length: {in: 10...250}
   validates :speciality, length: {in: 10...250}
   validates_format_of  :mobile, :with => /[0-9]{10,12}/x

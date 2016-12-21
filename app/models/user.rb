@@ -10,7 +10,7 @@ class User < ActiveRecord::Base
   validates :email,:username, presence: true, uniqueness: true
   validates :username, length: { minimum: 2 }
   validates :avatar, presence: true
-  #validates :birthday,:mobile, presence: true
+  validates :birthday,:mobile, presence: true
   validates :mobile, uniqueness: true
   validates_format_of :mobile, :with => /[0-9]{10,12}/x
 end
