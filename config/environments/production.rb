@@ -62,6 +62,8 @@ Rails.application.configure do
 
   # Use default logging formatter so that PID and timestamp are not suppressed.
   config.log_formatter = ::Logger::Formatter.new
+  #We need to change this, when we deploy the app in heroku
+  Rails.application.routes.default_url_options[:host] = 'localhost:3000'
 
   # Use a different logger for distributed setups.
   # require 'syslog/logger'
