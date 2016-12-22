@@ -24,6 +24,8 @@ DeviseTokenAuth.setup do |config|
   # redirect successful authentications to '/omniauth/github/callback'
   config.omniauth_prefix = "/omniauth"
   config.default_confirm_success_url = "https://gournetapi.herokuapp.com"
+  default_password_reset_url = "https://gournetapi.herokuapp.com"
+
 
 
   # By default sending current password is not needed for the password update.
@@ -31,6 +33,8 @@ DeviseTokenAuth.setup do |config|
   # attribute updates. Set it to :password if you want it to be checked only if
   # password is updated.
   # config.check_current_password_before_update = :attributes
+  config.check_current_password_before_update = :password
+
 
   # By default we will use callbacks for single omniauth.
   # It depends on fields like email, provider and uid.
