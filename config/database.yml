@@ -24,6 +24,8 @@ default: &default
 development:
   <<: *default
   database: gournet_development
+  username: gournet
+  password: 123456789
 
   # The specified database role being used to connect to postgres.
   # To create additional roles in postgres see `$ createuser --help`.
@@ -58,6 +60,8 @@ development:
 test:
   <<: *default
   database: gournet_test
+  username: gournet
+  password: 123456789
 
 # As with config/secrets.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is

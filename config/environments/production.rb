@@ -2,7 +2,22 @@ Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.default_url_options = {host: 'gournetapi.herokuapp.com',}
+  ActionMailer::Base.smtp_settings = {
+    :address    => 'smtp.sendgrid.net',
+    :port       => '587',
+    :authentication => :plain,
+    :user_name      => ENV['SENDGRID_USERNAME'],
+    :password       => ENV['SENDGRID_PASSWORD'],
+    :domain         => 'heroku.com',
+    :enable_starttls_auto => true
+  }
+  # Code is not reloaded between requests.
   config.cache_classes = true
+  config.to_prepare do
+    Devise::Mailer.layout "mailer" # email.haml or email.erb
+  end
 
   # Eager load code on boot. This eager loads most of Rails and
   # your application in memory, allowing both threaded web servers
@@ -62,6 +77,8 @@ Rails.application.configure do
 
   # Use default logging formatter so that PID and timestamp are not suppressed.
   config.log_formatter = ::Logger::Formatter.new
+
+  Rails.application.routes.default_url_options[:host] = 'https://gournetapi.herokuapp.com'
 
   # Use a different logger for distributed setups.
   # require 'syslog/logger'
