@@ -38,6 +38,7 @@ gem 'devise_token_auth', :git => 'git://github.com/lynndylanhurley/devise_token_
 gem 'omniauth'
 gem 'devise'
 gem 'rack-cors', :require => 'rack/cors'
+gem 'chronic'
 
 #for stylezed emails
 gem 'premailer-rails'

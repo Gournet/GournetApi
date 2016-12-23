@@ -24,6 +24,7 @@ class User < ActiveRecord::Base
   validates :avatar, presence: true
   validates :birthday,:mobile, presence: true
   validates_format_of :mobile, :with => /[0-9]{10,12}/x
+  validate :validate_date?
 
   def set_password
     p = SecureRandom.urlsafe_base64(nil,false)
@@ -54,6 +55,14 @@ class User < ActiveRecord::Base
     }
     new_auth_header = self.build_auth_header(token, client_id)
     new_auth_header
+  end
+
+  protected
+
+  def validate_date?
+    unless Chronic.parse(:day)
+      errors.add(:birthday, "is missing or invalid")
+    end
   end
 
 end
