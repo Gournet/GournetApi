@@ -5,6 +5,18 @@ class User < ActiveRecord::Base
           :confirmable
   include DeviseTokenAuth::Concerns::User
 
+  has_many :addresses, dependent: :destroy
+  has_many :alergy_by_users, dependent: :destroy
+  has_many :alergies, through: :alergy_by_users
+  has_many :orders, dependent: :nullify
+  has_many :followers, dependent: :destroy
+  has_many :chefs, through: :followers
+  has_many :favorite_dishes, dependent: :destroy
+  has_many :dishes, through: :favorite_dishes
+  has_many :rating_dishes, dependent: :nullify
+  has_many :dishes, through: :rating_dish
+
+
   validates :name, :lastname, presence: true
   validates :name, :lastname, length: { minimum: 2 }
   validates :email,:username, presence: true, uniqueness: true

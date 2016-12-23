@@ -1,0 +1,19 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  count: 1
+  price: 9.99
+  comment: MyText
+  address: one
+  user: one
+  dish: one
+  chef: one
+
+two:
+  count: 1
+  price: 9.99
+  comment: MyText
+  address: two
+  user: two
+  dish: two
+  chef: two

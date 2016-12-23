@@ -4,6 +4,11 @@ class Chef < ActiveRecord::Base
           :recoverable, :rememberable, :trackable, :validatable,
           :confirmable
   include DeviseTokenAuth::Concerns::User
+  has_many :dishes, dependent: :destroy
+  has_many :followers, dependent: :destroy
+  has_many :users, through: :followers
+  has_many :orders, dependent: :nullify
+
   enum cooker:{
     :Profesional => 0,
     :Amateur => 1,

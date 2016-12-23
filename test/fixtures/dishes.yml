@@ -1,0 +1,17 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  description: MyText
+  price: 9.99
+  cooking_time: 9.99
+  calories: 9.99
+  chef: one
+
+two:
+  name: MyString
+  description: MyText
+  price: 9.99
+  cooking_time: 9.99
+  calories: 9.99
+  chef: two
