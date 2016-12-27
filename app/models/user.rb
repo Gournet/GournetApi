@@ -5,16 +5,76 @@ class User < ActiveRecord::Base
           :confirmable
   include DeviseTokenAuth::Concerns::User
 
-  has_many :addresses, dependent: :destroy
+  default_scope {order("name ASC, lastname ASC")}
+  scope :order_by_email, -> {reorder("email ASC")}
+  scope :order_by_username, -> {reorder("username ASC")}
+
+
+  def self.load_users
+    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+  end
+
+  def self.user_by_id(id)
+    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    .where(id: id)
+  end
+
+  def self.orders_today(user_id)
+    includes(orders: [:chef,:dish,:address])
+      .where(orders: { created_at: Date.today })
+      .where(id: user_id)
+  end
+
+  def self.orders_yesterday(user_id)
+    includes(orders: [:chef,:dish,:address])
+      .where(orders: { created_at: (Date.today -1.days) })
+      .where(id: user_id)
+  end
+
+  def self.orders_week(user_id)
+    today = Date.today
+    next_week = Date.today
+    if today.monday?
+      next_week = (today + 6.days).end_of_day
+    else
+      today = previous_day(today,1)
+      next_week = (today + 6.days).end_of_day
+    end
+    range = today..next_week
+    includes(orders: [:chef,:dish,:address])
+      .where(orders: { created_at: range } )
+      .where(id: user_id)
+  end
+
+  def self.orders_month(user_id,year,month)
+    date = Data.new(year,month,1).beginning_of_day
+    date_end = (data.end_of_month).end_of_day
+    range = date..next_week
+    includes(orders: [:chef,:dish,:address])
+      .where(orders: { created_at: range } )
+      .where(id: user_id)
+  end
+
+  def self.orders_year(user_id,year)
+    date = Data.new(year,1,1).beginning_of_day
+    date_end = (data.end_of_year).end_of_day
+    range = date..next_week
+    includes(orders: [:chef,:dish,:address])
+      .where(orders: { created_at: range } )
+      .where(id: user_id)
+  end
+
+
+  has_many :addresses, -> {order('created_at DESC')}, dependent: :destroy
   has_many :alergy_by_users, dependent: :destroy
-  has_many :alergies, through: :alergy_by_users
-  has_many :orders, dependent: :nullify
+  has_many :alergies,-> {order{'name ASC'}}, through: :alergy_by_users
+  has_many :orders, -> {order{'created_at DESC'}}, dependent: :nullify
   has_many :followers, dependent: :destroy
-  has_many :chefs, through: :followers
+  has_many :chefs, -> {order('name ASC')}, through: :followers
   has_many :favorite_dishes, dependent: :destroy
-  has_many :dishes, through: :favorite_dishes
-  has_many :rating_dishes, dependent: :nullify
-  has_many :dishes, through: :rating_dish
+  has_many :dishes, -> {order('name ASC')}, through: :favorite_dishes
+  has_many :rating_dishes, ->{order('rating DESC')}, dependent: :nullify
+  has_many :r_dishes,->{order('name ASC')}, through: :rating_dish, source: :dishes
 
 
   validates :name, :lastname, presence: true

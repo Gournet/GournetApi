@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161223030227) do
+ActiveRecord::Schema.define(version: 20161227001142) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -139,11 +139,12 @@ ActiveRecord::Schema.define(version: 20161223030227) do
     t.text     "description"
     t.text     "expertise",              default: "",      null: false
     t.text     "speciality",                               null: false
-    t.integer  "type"
+    t.integer  "type_chef"
     t.text     "food_types",             default: "",      null: false
     t.json     "tokens"
     t.datetime "created_at",                               null: false
     t.datetime "updated_at",                               null: false
+    t.date     "birthday"
     t.index ["email"], name: "index_chefs_on_email", using: :btree
     t.index ["reset_password_token"], name: "index_chefs_on_reset_password_token", unique: true, using: :btree
     t.index ["uid", "provider"], name: "index_chefs_on_uid_and_provider", unique: true, using: :btree
@@ -194,11 +195,11 @@ ActiveRecord::Schema.define(version: 20161223030227) do
     t.text     "description"
     t.integer  "order",       null: false
     t.string   "image"
-    t.integer  "chef_id"
+    t.integer  "dish_id"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
-    t.index ["chef_id", "order"], name: "index_images_on_chef_id_and_order", unique: true, using: :btree
-    t.index ["chef_id"], name: "index_images_on_chef_id", using: :btree
+    t.index ["dish_id", "order"], name: "index_images_on_dish_id_and_order", unique: true, using: :btree
+    t.index ["dish_id"], name: "index_images_on_dish_id", using: :btree
   end
 
   create_table "orders", force: :cascade do |t|
@@ -221,7 +222,7 @@ ActiveRecord::Schema.define(version: 20161223030227) do
   create_table "rating_dishes", force: :cascade do |t|
     t.integer  "user_id"
     t.integer  "dish_id"
-    t.integer  "rating"
+    t.decimal  "rating"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["dish_id"], name: "index_rating_dishes_on_dish_id", using: :btree
@@ -278,7 +279,7 @@ ActiveRecord::Schema.define(version: 20161223030227) do
   add_foreign_key "favorite_dishes", "users"
   add_foreign_key "followers", "chefs"
   add_foreign_key "followers", "users"
-  add_foreign_key "images", "chefs"
+  add_foreign_key "images", "dishes"
   add_foreign_key "orders", "addresses"
   add_foreign_key "orders", "chefs"
   add_foreign_key "orders", "dishes"
