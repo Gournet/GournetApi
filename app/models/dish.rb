@@ -80,9 +80,15 @@ class Dish < ApplicationRecord
     .find_by_id(id)
   end
 
-  def self.dish_by_id(ids,page = 1,per_page = 10)
+  def self.dishes_by_id(sids,page = 1,per_page = 10)
     includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
     .where(id: ids)
+    .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.dishes_by_not_ids(ids,page = 1,per_page = 10)
+    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 

@@ -4,6 +4,8 @@ class Chef < ActiveRecord::Base
           :recoverable, :rememberable, :trackable, :validatable,
           :confirmable
   include DeviseTokenAuth::Concerns::User, Utility
+  mount_uploader :avatar, AvatarUploader
+
 
   default_scope {order('name ASC, lastname ASC')}
   scope :order_by_email, -> {reorder('email ASC')}
@@ -19,9 +21,14 @@ class Chef < ActiveRecord::Base
       .find_by_id(id)
   end
 
-  def self.chef_by_ids(chef_ids,page = 1, per_page = 10)
+  def self.chefs_by_ids(chef_ids,page = 1, per_page = 10)
     includes(:dishes,:users,orders: [:user,:dish,:address])
       .where(id: chef_ids)
+      .paginate(:page => page, :per_page => per_page)
+  end
+  def self.chefs_by_not_ids(chef_ids,page = 1, per_page = 10)
+    includes(:dishes,:users,orders: [:user,:dish,:address])
+      .where.not(id: chef_ids)
       .paginate(:page => page, :per_page => per_page)
   end
 
@@ -120,7 +127,7 @@ class Chef < ActiveRecord::Base
   validates :name,:username,:lastname,:birthday,:food_types,presence:true
   validates :name,:lastname, length: { minimum: 3 }
   validates :username,length: { minimum: 5 }, uniqueness:true
-  validates :avatar, presence: true
+  validates_presence_of :avatar
   validates :email, presence:true, uniqueness: true
   validates :description, presence: true, length: {in:10...250}
   validates :food_types,length:{ minimum:3 }
@@ -130,6 +137,8 @@ class Chef < ActiveRecord::Base
   validates_format_of  :mobile, :with => /[0-9]{10,12}/x
   validate :validate_date?
   validates :type_chef, inclusion: {in: type_chefs.keys}
+  validates_integrity_of :avatar
+  validates_processing_of :avatar
 
   protected
 

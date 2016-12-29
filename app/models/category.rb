@@ -16,6 +16,10 @@ class Category < ApplicationRecord
     includes(:dishes).where(ids: ids)
       .paginate(:page => page, :per_page => per_page)
   end
+  def self.categories_by_not_ids(ids,page,per_page)
+    includes(:dishes).where.not(ids: ids)
+      .paginate(:page => page, :per_page => per_page)
+  end
 
   def self.load_categories(page = 1,per_page = 10)
     includes(:dishes)

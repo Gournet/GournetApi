@@ -35,9 +35,13 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem 'devise_token_auth', :git => 'git://github.com/lynndylanhurley/devise_token_auth.git'
+
+#Authentication
 gem 'omniauth'
 gem 'devise'
+#cross-origin
 gem 'rack-cors', :require => 'rack/cors'
+#validator for dates
 gem 'chronic'
 
 #for stylezed emails
@@ -46,3 +50,8 @@ gem 'nokogiri'
 
 #pagination
 gem 'will_paginate', '~> 3.1.0'
+
+#images
+gem 'carrierwave', '~> 1.0'
+gem "fog"
+gem 'mini_magick'

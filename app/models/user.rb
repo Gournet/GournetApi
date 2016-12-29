@@ -4,6 +4,7 @@ class User < ActiveRecord::Base
           :recoverable, :rememberable, :trackable, :validatable,
           :confirmable
   include DeviseTokenAuth::Concerns::User,Utility
+  mount_uploader :avatar, AvatarUploader
 
   default_scope {order("name ASC, lastname ASC")}
   scope :order_by_email, -> {reorder("email ASC")}
@@ -23,6 +24,12 @@ class User < ActiveRecord::Base
   def self.users_by_ids(ids,page = 1, per_page = 10)
     includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
     .where(id: ids)
+    .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.users_by_not_ids(ids,page = 1, per_page = 10)
+    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
@@ -141,10 +148,12 @@ class User < ActiveRecord::Base
   validates :name, :lastname, length: { minimum: 2 }
   validates :email,:username, presence: true, uniqueness: true
   validates :username, length: { minimum: 2 }
-  validates :avatar, presence: true
+  validates_presence_of :avatar
   validates :birthday,:mobile, presence: true
   validates_format_of :mobile, :with => /[0-9]{10,12}/x
   validate :validate_date?
+  validates_integrity_of :avatar
+  validates_processing_of :avatar
 
   def set_password
     p = SecureRandom.urlsafe_base64(nil,false)
@@ -156,7 +165,7 @@ class User < ActiveRecord::Base
     self.assign_attributes({
       name: attribute[:name],
       lastname: attribute[:lastname],
-      avatar: attribute[:avatar],
+      remote_avatar_url: attribute[:avatar],
       username: attribute[:username],
       birthday: attribute[:birthday],
       mobile: attribute[:mobile],

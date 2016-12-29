@@ -22,6 +22,12 @@ class Order < ApplicationRecord
     .paginate(:page => page, :per_page => per_page)
   end
 
+  def self.orders_by_not_ids(ids,page = 1, per_page = 10)
+    includes(:address,:user,:dish,:chef)
+    .where.not(ids)
+    .paginate(:page => page, :per_page => per_page)
+  end
+
   def self.orders_by_user_id(user_id,page = 1, per_page = 10)
     includes(:address,:user,:dish,:chef)
     .where(user_id: user_id)

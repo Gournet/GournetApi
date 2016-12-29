@@ -1,5 +1,6 @@
 class Image < ApplicationRecord
 
+  mount_uploader :image, ImageUploader
   default_scope {order("created_at DESC")}
 
 
@@ -23,6 +24,10 @@ class Image < ApplicationRecord
   validates :description,:order,:image,presence:true
   validates :description,length: { in: 10...250 }
   validates :order, numericality: { greater_than_or_equal: 0 }
+  validates_presence_of :image
+  validates_integrity_of :image
+  validates_processing_of :image
+
 
 
 end
