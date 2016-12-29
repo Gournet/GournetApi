@@ -10,10 +10,15 @@ class Admin < ActiveRecord::Base
   scope :order_by_email, -> {reorder('email ASC')}
 
   def self.admin_by_id(id)
-    where(id: id).first
+    find_by_id(id)
   end
+
   def self.admin_by_username(username)
     where(username: username).first
+  end
+
+  def self.admin_by_email(email)
+    where(email: email).first
   end
 
   validates :name,:lastname,:username, presence: true

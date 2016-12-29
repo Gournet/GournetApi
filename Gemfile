@@ -43,3 +43,6 @@ gem 'chronic'
 #for stylezed emails
 gem 'premailer-rails'
 gem 'nokogiri'
+
+#pagination
+gem 'will_paginate', '~> 3.1.0'

@@ -1,9 +1,11 @@
 class Availability < ApplicationRecord
-
+  # When we use scope, we get an active record relationsip for that reason we can continue
+  # chaining more methods on the result, I mean pagination, so the pagination of this model will be made
+  # in the controller instead of the model
   default_scope {order('day ASC, count DESC')}
   scope :today, -> { includes(:dish).where('day = ?', Date.today )}
   scope :tomorrow, -> { includes(:dish).where('day = ?' ,Date.tomorrow)}
-  scope :week, -> { includes(:dish).where(day: (Date.today)..((Date.today + 6).end_of_day))}
+  scope :next_six_days, -> { includes(:dish).where(day: (Date.today)..((Date.today + 6).end_of_day))}
   scope :available_for_today -> {today.where('count > 0')}
 
   belongs_to :dish

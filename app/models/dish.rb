@@ -1,66 +1,94 @@
 class Dish < ApplicationRecord
+  include Utility
 
   default_scope {order('name ASC')}
   scope :order_by_price, -> {reorder('price ASC')}
   scope :order_by_calories, -> {reorder('calories ASC')}
   scope :order_by_cooking_time, -> {reorder('cooking_time ASC')}
+  scope :order_by_rating, -> {reorder('rating DESC')}
 
 
-  def self.order_by_rating
-    dishes = joins(:rating_dishes).select('dishes.*')
+  def self.popular_dishes_by_rating(page = 1, per_page = 10)
+    where("rating >= 3")
+    .paginate(:page => page, :per_page => per_page)
+    .reorder("rating DESC")
+  end
+
+  def self.dishes_with_rating(page = 1, per_page = 10)
+    joins(:rating_dishes).select('dishes.*')
       .group("dishes.id")
-      .having("AVG(rating_dishes.rating) >= 1")
+      .paginate(:page => page, :per_page => per_page)
       .reorder("AVG(rating_dishes.rating) DESC")
   end
 
-  def self.popular_dishes_by_rating
-    dishes = joins(:rating_dishes).select('dishes.*')
+  def self.dishes_with_comments(page = 1, per_page = 10)
+    joins(:comments).select("dishes.*")
       .group("dishes.id")
-      .having("AVG(rating_dishes.rating) >= 1")
-      .reorder("AVG(rating_dishes.rating) DESC")
-      .limit(10)
-    dishes
+      .paginate(:page => page ,:per_page => per_page)
+      .reorder("COUNT(comments.id) DESC")
   end
 
-  def self.popular_dishes_by_orders
-    dishes = joins(:orders).select("dishes.*")
+  def self.dihses_with_rating_and_comments(page = 1, per_page = 10)
+    joins(:rating_dishes,:comments).select('dishes.*')
       .group("dishes.id")
+      .paginate(:page => page, :per_page => 10)
+      .reorder("AVG(rating_dishes.rating) DESC, COUNT(comments.id) DESC")
+  end
+
+  def self.popular_dishes_by_orders(page = 1, per_page = 10)
+    joins(:orders).select("dishes.*")
+      .group("dishes.id")
+      .paginate(:page => page,:per_page => per_page)
       .reorder("COUNT(orders.dish_id) DESC")
-      .limit(10)
   end
 
-  def self.popular_dishes_by_orders_yesterday
-    date_start = (Date.today.midnight - 1.days)
-    date_end =  ((Date.today. - 1.days).end_of_day)
-    dishes = joins(:orders).select("dishes.*")
-      .where("orders.created_at => ? AND orders.created_at <= ? ",date_start,date_end)
+  def self.popular_dishes_by_orders_today(page = 1, per_page = 10)
+    range = Date.today.beginning_of_day..Date.today.end_of_day
+    Dish.query_orders(range,page,per_page)
+  end
+
+  def self.popular_dishes_by_orders_yesterday(page = 1, per_page = 10)
+    range = Dish.new.yesterday()
+    Dish.query_orders(range,page,per_page)
+  end
+
+  def self.popular_dishes_by_orders_week(page = 1, per_page = 10)
+    range = Dish.new.week()
+    Dish.query_orders(range,page,per_page)
+  end
+
+  def self.popular_dishes_by_orders_month(year = 2016, month_number = 1, page = 1, per_page = 10)
+    range = Dish.new.month(year,month_number)
+    Dish.query_orders(range,page,per_page)
+  end
+
+  def self.popular_dishes_by_orders_year(year_number = 2016,page = 1, per_page = 10)
+    range = Dish.new.year(year_number)
+    Dish.query_orders(range,page,per_page)
+  end
+  def self.best_seller_dishes_per_year(year_number = 2016)
+    range = Dish.new.year(year_number)
+    joins(:orders).select("dishes.*")
+      .where(orders: { created_at: range })
       .group("dishes.id")
-      .reorder("COUNT(orders.dish_id) DESC")
-      .limit(10)
+      .reorder("COUNT(orders.id) DESC")
+      .limit(3)
   end
 
-  def self.popular_dishes_by_orders_week
-    today = Date.today
-    next_week = Date.today
-    if today.monday?
-      next_week = (today + 6.days).end_of_day
-    else
-      today = previous_day(today,1)
-      next_week = (today + 6.days).end_of_day
-    end
-    dishes = joins(:orders).select("dishes.*")
-      .where("orders.created_at => ? AND orders.created_at <= ? ",today,next_week)
-      .group("dishes.id")
-      .reorder("COUNT(orders.dish_id) DESC")
-      .limit(10)
+  def self.dish_by_id(id)
+    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    .find_by_id(id)
   end
 
-  def self.dish_by_id(:id)
-    includes(:images,:categories,:orders,:comments,:alergies,:users).where(id: id).first
+  def self.dish_by_id(ids,page = 1,per_page = 10)
+    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    .where(id: ids)
+    .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.load_dishes
-    includes(:images,:categories,:orders,:comments,:alergies,:users)
+  def self.load_dishes(page = 1, per_page = 10)
+    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    .paginate(:page => page, :per_page => per_page)
   end
 
   belongs_to :chef
@@ -85,8 +113,12 @@ class Dish < ApplicationRecord
   validates :calories,numericality: { greater_than: 0 }
 
   protected
-    def previous_day(date,day_of_week)
-      date - ((date.wday - day_of_week) % 7)
-    end
 
+    def self.query_orders(date,page,per_page)
+      dishes = joins(:orders).select("dishes.*")
+        .where(orders: {created_at: date })
+        .group("dishes.id")
+        .paginate(:page => page, :per_page => per_page)
+        .reorder("COUNT(orders.dish_id) DESC")
+    end
 end

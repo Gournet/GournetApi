@@ -3,12 +3,15 @@ class Image < ApplicationRecord
   default_scope {order("created_at DESC")}
 
 
-  def self.images_by_dish_id(dish_id)
-    includes(:dish).where(dish_id: dish_id).reorder("order ASC")
+  def self.images_by_dish_id(dish_id, page = 1, per_page = 10)
+    includes(:dish).where(dish_id: dish_id)
+    .paginate(:page => page, :per_page => per_page)
+    .reorder("order ASC")
   end
 
-  def self.load_images
+  def self.load_images(page = 1, per_page = 10)
     includes(:dish)
+    .paginate(:page => page, :per_page => per_page)
   end
 
   def self.image_by_id(id)

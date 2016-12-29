@@ -3,65 +3,125 @@ class User < ActiveRecord::Base
   devise :database_authenticatable, :registerable,
           :recoverable, :rememberable, :trackable, :validatable,
           :confirmable
-  include DeviseTokenAuth::Concerns::User
+  include DeviseTokenAuth::Concerns::User,Utility
 
   default_scope {order("name ASC, lastname ASC")}
   scope :order_by_email, -> {reorder("email ASC")}
   scope :order_by_username, -> {reorder("username ASC")}
 
 
-  def self.load_users
+  def self.load_users(page = 1, per_page = 10)
     includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    .paginate(:page => page,:per_page => per_page)
   end
 
   def self.user_by_id(id)
     includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
-    .where(id: id)
+    .find_by_id(id)
   end
 
-  def self.orders_today(user_id)
-    includes(orders: [:chef,:dish,:address])
-      .where(orders: { created_at: Date.today })
-      .where(id: user_id)
+  def self.users_by_ids(ids,page = 1, per_page = 10)
+    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    .where(id: ids)
+    .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.orders_yesterday(user_id)
-    includes(orders: [:chef,:dish,:address])
-      .where(orders: { created_at: (Date.today -1.days) })
-      .where(id: user_id)
+  def self.orders_today(user_id,page = 1, per_page = 10)
+    range = Date.today.beginning_of_day..Date.today.end_of_day
+    User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_week(user_id)
-    today = Date.today
-    next_week = Date.today
-    if today.monday?
-      next_week = (today + 6.days).end_of_day
-    else
-      today = previous_day(today,1)
-      next_week = (today + 6.days).end_of_day
-    end
-    range = today..next_week
-    includes(orders: [:chef,:dish,:address])
-      .where(orders: { created_at: range } )
-      .where(id: user_id)
+  def self.orders_yesterday(user_id,page = 1,per_page = 10)
+    range = User.new.yesterday()
+    User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_month(user_id,year,month)
-    date = Data.new(year,month,1).beginning_of_day
-    date_end = (data.end_of_month).end_of_day
-    range = date..next_week
-    includes(orders: [:chef,:dish,:address])
-      .where(orders: { created_at: range } )
-      .where(id: user_id)
+  def self.orders_week(user_id,page = 1, per_page = 10)
+    range = User.new.week()
+    User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_year(user_id,year)
-    date = Data.new(year,1,1).beginning_of_day
-    date_end = (data.end_of_year).end_of_day
-    range = date..next_week
-    includes(orders: [:chef,:dish,:address])
-      .where(orders: { created_at: range } )
-      .where(id: user_id)
+  def self.orders_month(user_id,year = 2016,month = 1,page = 1,per_page = 10)
+    User.query_orders(user_id,range,page,per_page)
+  end
+
+  def self.orders_year(user_id,year = 2016,page = 1,per_page = 10)
+    range = User.new.year(year)
+    User.query_orders(user_id,range,page,per_page)
+  end
+
+  def self.users_with_addresses(page = 1, per_page = 10)
+    joins(:addresses).select("users.*")
+      .group("users.id")
+      .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.users_with_alergies(page = 1, per_page = 10)
+    joins(:alergies).select("users.*")
+      .group("users.id")
+      .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.users_with_followers(page = 1, per_page = 10)
+    joins(:followers).select("users.*")
+      .group("users.id")
+      .paginate(:page => page, :per_page => per_page)
+      .reorder("COUNT(followers.id) DESC")
+  end
+
+  def self.users_with_orders(page = 1, per_page = 10)
+    joins(:orders).select("users.*")
+      .group("users.id")
+      .paginate(:page => page, per_page => per_page)
+      .reorder("COUNT(orders.id) DESC")
+  end
+
+  def self.users_with_favorite_dishes(page = 1, per_page = 10)
+    joins(:favorite_dishes).select("users.*")
+      .group("users.id")
+      .paginate(:page => page, :per_page => per_page)
+      .reorder("COUNT(favorite_dishes.id) DESC")
+  end
+
+  def self.users_with_rating_dishes(page = 1, per_page = 10)
+    joins(:favorite_dishes).select("users.*")
+      .group("users.id")
+      .paginate(:page => page, :per_page => per_page)
+      reorder("COUNT(favorite_dishes)")
+  end
+
+  def self.users_with_orders_today(page = 1,per_page = 10)
+    range = Date.today.beginning_of_day..Date.today.end_of_day
+    User.query_orders_users(range,page,per_page)
+  end
+
+  def self.users_with_orders_yesterday(page = 1, per_page = 10)
+    range = User.new.yesterday()
+    User.query_orders_users(range,page,per_page)
+  end
+
+  def self.users_with_orders_week(page = 1,per_page = 10)
+    range = User.new.week()
+    User.query_orders_users(range,page,per_page)
+  end
+
+  def self.users_with_orders_month(year = 2016,month_number = 1,page = 1,per_page = 10)
+    range = User.new.month(year,month_number)
+    User.query_orders_users(range,page,per_page)
+  end
+
+  def self.users_with_orders_year(year_number = 2016)
+    range = User.new.year(year_number)
+    User.query_orders_users(range,page,per_page)
+  end
+
+  def self.best_seller_users_per_year(year_number = 2016)
+    range = User.new.year(year_number)
+    joins(:orders).select("users.*")
+      .where(orders: { created_at: range })
+      .group("users.id")
+      .reorder("COUNT(orders.id) DESC")
+      .limit(3)
   end
 
 
@@ -123,6 +183,21 @@ class User < ActiveRecord::Base
     unless Chronic.parse(:day)
       errors.add(:birthday, "is missing or invalid")
     end
+  end
+
+  def self.query_orders_users(date,page,per_page)
+    joins(:orders).select("users.*")
+      .where(orders: { created_at: date })
+      .group("users.id")
+      .paginate(:page => page, :per_page => per_page)
+      .reorder("COUNT(orders.id) DESC")
+  end
+
+  def self.query_orders(user_id,date,page,per_page)
+    includes(orders: [:chef,:dish,:address])
+      .where(orders: { created_at: date } )
+      .where(id: user_id)
+      .paginate(:page => page, :per_page => per_page)
   end
 
 end

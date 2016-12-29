@@ -13,33 +13,46 @@ class Order < ApplicationRecord
 
   def self.order_by_id(id)
     includes(:address,:user,:dish,:chef)
-    .where(id: id)
-    .first
+    .find_by_id(id)
   end
 
-  def self.orders_by_user_id(user_id)
+  def self.orders_by_ids(ids,page = 1, per_page = 10)
+    includes(:address,:user,:dish,:chef)
+    .where(ids)
+    .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.orders_by_user_id(user_id,page = 1, per_page = 10)
     includes(:address,:user,:dish,:chef)
     .where(user_id: user_id)
+    .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.orders_by_chef_id(chef_id)
+  def self.orders_by_chef_id(chef_id,page = 1,per_page = 10)
     includes(:address,:user,:dish,:chef)
     .where(chef_id: chef_id)
+    .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.orders_by_dish_id(dish_id)
+  def self.orders_by_dish_id(dish_id,page = 1, per_page = 10)
     includes(:address,:user,:dish,:chef)
     .where(dish_id: dish_id)
+    .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.orders_by_address_id(address_id)
+  def self.orders_by_address_id(address_id, page = 1, per_page = 10)
     includes(:address,:user,:dish,:chef)
     .where(address_id: address_id)
+    .paginate(:page => page, :per_page => per_page)
   end
 
   def self.orders_today
     includes(:address,:user,:dish,:chef)
     .where(created_at: Date.today)
+  end
+
+  def self.orders_by_user_by_dish_id(user_id,dish_id)
+    where(dish_id: dish_id, user_id: user_id).first
   end
 
   def self.orders_yesterday
@@ -75,15 +88,15 @@ class Order < ApplicationRecord
     .where(created_at: range)
   end
 
-  enum type_payment: {
+  enum payment_type: {
     :card => 0,
     :cash => 1
   }
 
   validates :count,:price,:payment_type,presence:true
-  validates :count,:numericality: { greater_than_or_equal: 1 }
-  validates :price,:numericality: { greater_than_or_equal: 100 }
+  validates :count,numericality: { greater_than_or_equal: 1 }
+  validates :price,numericality: { greater_than_or_equal: 100 }
   validates :payment_type, presence: true
-  validates_inclusion_of :payment_type, :in => type_payments.keys
+  validates :payment_type, inclusion: {in: payment_types.keys}
 
 end
