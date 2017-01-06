@@ -10,10 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161220165510) do
+ActiveRecord::Schema.define(version: 20161228165543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "addresses", force: :cascade do |t|
+    t.string   "address"
+    t.decimal  "lat"
+    t.decimal  "lng"
+    t.integer  "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_addresses_on_user_id", using: :btree
+  end
 
   create_table "admins", force: :cascade do |t|
     t.string   "provider",               default: "email", null: false
@@ -48,6 +58,59 @@ ActiveRecord::Schema.define(version: 20161220165510) do
     t.index ["uid", "provider"], name: "index_admins_on_uid_and_provider", unique: true, using: :btree
   end
 
+  create_table "alergies", force: :cascade do |t|
+    t.string   "name",        null: false
+    t.text     "description"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  create_table "alergy_by_dishes", force: :cascade do |t|
+    t.integer  "alergy_id"
+    t.integer  "dish_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["alergy_id"], name: "index_alergy_by_dishes_on_alergy_id", using: :btree
+    t.index ["dish_id"], name: "index_alergy_by_dishes_on_dish_id", using: :btree
+  end
+
+  create_table "alergy_by_users", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "alergy_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["alergy_id"], name: "index_alergy_by_users_on_alergy_id", using: :btree
+    t.index ["user_id"], name: "index_alergy_by_users_on_user_id", using: :btree
+  end
+
+  create_table "availabilities", force: :cascade do |t|
+    t.date     "day",                        null: false
+    t.integer  "count"
+    t.boolean  "available",  default: true,  null: false
+    t.time     "end_time"
+    t.boolean  "repeat",     default: false, null: false
+    t.integer  "dish_id"
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.index ["dish_id"], name: "index_availabilities_on_dish_id", using: :btree
+  end
+
+  create_table "categories", force: :cascade do |t|
+    t.string   "name",        null: false
+    t.text     "description"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  create_table "category_by_dishes", force: :cascade do |t|
+    t.integer  "category_id"
+    t.integer  "dish_id"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+    t.index ["category_id"], name: "index_category_by_dishes_on_category_id", using: :btree
+    t.index ["dish_id"], name: "index_category_by_dishes_on_dish_id", using: :btree
+  end
+
   create_table "chefs", force: :cascade do |t|
     t.string   "provider",               default: "email", null: false
     t.string   "uid",                    default: "",      null: false
@@ -76,14 +139,96 @@ ActiveRecord::Schema.define(version: 20161220165510) do
     t.text     "description"
     t.text     "expertise",              default: "",      null: false
     t.text     "speciality",                               null: false
-    t.integer  "type"
+    t.integer  "type_chef"
     t.text     "food_types",             default: "",      null: false
     t.json     "tokens"
     t.datetime "created_at",                               null: false
     t.datetime "updated_at",                               null: false
+    t.date     "birthday"
     t.index ["email"], name: "index_chefs_on_email", using: :btree
     t.index ["reset_password_token"], name: "index_chefs_on_reset_password_token", unique: true, using: :btree
     t.index ["uid", "provider"], name: "index_chefs_on_uid_and_provider", unique: true, using: :btree
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.text     "description"
+    t.integer  "is_possitive"
+    t.integer  "user_id"
+    t.integer  "dish_id"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+    t.index ["dish_id"], name: "index_comments_on_dish_id", using: :btree
+    t.index ["user_id"], name: "index_comments_on_user_id", using: :btree
+  end
+
+  create_table "dishes", force: :cascade do |t|
+    t.string   "name",                         null: false
+    t.text     "description"
+    t.decimal  "price"
+    t.decimal  "cooking_time"
+    t.decimal  "calories"
+    t.integer  "chef_id"
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+    t.decimal  "rating",       default: "0.0"
+    t.index ["chef_id"], name: "index_dishes_on_chef_id", using: :btree
+  end
+
+  create_table "favorite_dishes", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "dish_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dish_id"], name: "index_favorite_dishes_on_dish_id", using: :btree
+    t.index ["user_id"], name: "index_favorite_dishes_on_user_id", using: :btree
+  end
+
+  create_table "followers", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "chef_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chef_id"], name: "index_followers_on_chef_id", using: :btree
+    t.index ["user_id"], name: "index_followers_on_user_id", using: :btree
+  end
+
+  create_table "images", force: :cascade do |t|
+    t.text     "description"
+    t.integer  "order",       null: false
+    t.string   "image"
+    t.integer  "dish_id"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+    t.index ["dish_id", "order"], name: "index_images_on_dish_id_and_order", unique: true, using: :btree
+    t.index ["dish_id"], name: "index_images_on_dish_id", using: :btree
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.integer  "count",        default: 1, null: false
+    t.decimal  "price"
+    t.text     "comment"
+    t.integer  "address_id"
+    t.integer  "user_id"
+    t.integer  "dish_id"
+    t.integer  "chef_id"
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
+    t.integer  "payment_type"
+    t.index ["address_id"], name: "index_orders_on_address_id", using: :btree
+    t.index ["chef_id"], name: "index_orders_on_chef_id", using: :btree
+    t.index ["dish_id"], name: "index_orders_on_dish_id", using: :btree
+    t.index ["user_id"], name: "index_orders_on_user_id", using: :btree
+  end
+
+  create_table "rating_dishes", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "dish_id"
+    t.decimal  "rating"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dish_id"], name: "index_rating_dishes_on_dish_id", using: :btree
+    t.index ["user_id", "dish_id"], name: "index_rating_dishes_on_user_id_and_dish_id", unique: true, using: :btree
+    t.index ["user_id"], name: "index_rating_dishes_on_user_id", using: :btree
   end
 
   create_table "users", force: :cascade do |t|
@@ -120,4 +265,26 @@ ActiveRecord::Schema.define(version: 20161220165510) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true, using: :btree
   end
 
+  add_foreign_key "addresses", "users"
+  add_foreign_key "alergy_by_dishes", "alergies"
+  add_foreign_key "alergy_by_dishes", "dishes"
+  add_foreign_key "alergy_by_users", "alergies"
+  add_foreign_key "alergy_by_users", "users"
+  add_foreign_key "availabilities", "dishes"
+  add_foreign_key "category_by_dishes", "categories"
+  add_foreign_key "category_by_dishes", "dishes"
+  add_foreign_key "comments", "dishes"
+  add_foreign_key "comments", "users"
+  add_foreign_key "dishes", "chefs"
+  add_foreign_key "favorite_dishes", "dishes"
+  add_foreign_key "favorite_dishes", "users"
+  add_foreign_key "followers", "chefs"
+  add_foreign_key "followers", "users"
+  add_foreign_key "images", "dishes"
+  add_foreign_key "orders", "addresses"
+  add_foreign_key "orders", "chefs"
+  add_foreign_key "orders", "dishes"
+  add_foreign_key "orders", "users"
+  add_foreign_key "rating_dishes", "dishes"
+  add_foreign_key "rating_dishes", "users"
 end

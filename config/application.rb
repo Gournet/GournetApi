@@ -35,6 +35,8 @@ module Gournet
           :methods => [:get,:post,:options,:delete,:put,:patch,:head]
       end
     end
+    config.autoload_paths += %W(#{config.root}/lib)
+
 
   end
 end

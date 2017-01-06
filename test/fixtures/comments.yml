@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  description: MyText
+  is_possitive: 1
+  user: one
+  dish: one
+
+two:
+  description: MyText
+  is_possitive: 1
+  user: two
+  dish: two

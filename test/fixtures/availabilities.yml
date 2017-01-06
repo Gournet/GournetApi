@@ -1,0 +1,17 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  day: 2016-12-22
+  count: 1
+  available: false
+  end_time: 2016-12-22 20:58:53
+  repeat: false
+  dish: one
+
+two:
+  day: 2016-12-22
+  count: 1
+  available: false
+  end_time: 2016-12-22 20:58:53
+  repeat: false
+  dish: two
