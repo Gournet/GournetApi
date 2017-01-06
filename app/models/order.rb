@@ -7,8 +7,9 @@ class Order < ApplicationRecord
   belongs_to :dish
   belongs_to :chef
 
-  def self.load_orders
+  def self.load_orders(page = 1, per_page = 10)
     includes(:address,:user,:dish,:chef)
+    .paginate(:page => page, :per_page => per_page)
   end
 
   def self.order_by_id(id)

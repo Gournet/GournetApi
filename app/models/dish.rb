@@ -76,11 +76,11 @@ class Dish < ApplicationRecord
   end
 
   def self.dish_by_id(id)
-    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    includes(:images,:chef,:categories,orders: [:user,:address],:comments,:alergies,:users)
     .find_by_id(id)
   end
 
-  def self.dishes_by_id(sids,page = 1,per_page = 10)
+  def self.dishes_by_ids(sids,page = 1,per_page = 10)
     includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
     .where(id: ids)
     .paginate(:page => page, :per_page => per_page)
@@ -102,6 +102,7 @@ class Dish < ApplicationRecord
   has_many :categories, through: :category_by_dishes
   has_many :images, -> {reorder('order ASC')}, dependent: :destroy
   has_many :orders, -> {reorder('created_at DESC')}, dependent: :nullify
+  has_many :availabilities, dependent: :destroy
   has_many :comments, -> {reorder('created_at DESC')}, dependent: :destroy
   has_many :comment_users, -> {reorder('created_at DESC')}, through: :comments, source: :users
   has_many :alergy_by_dishes, dependent: :destroy

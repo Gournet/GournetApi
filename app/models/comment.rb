@@ -9,8 +9,30 @@ class Comment < ApplicationRecord
       .paginate(:page => page, :per_page => per_page)
   end
 
+  def self.comments_by_dish(dish_id,page = 1, per_page = 10)
+    includes(:user,:dish)
+      .where(dish_id: dish_id)
+      .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.comments_by_user(user_id,page = 1, per_page = 10)
+    includes(:user,:dish)
+      .where(user_id: user_id)
+      .paginate(:page => page, :per_page => per_page)
+  end
+
   def self.comment_by_id(id)
     includes(:user,:dish).find_by_id(id)
+  end
+
+  def self.comment_by_id_by_user(user_id,id)
+    includes(:user,:dish)
+      .where(user_id: user_id).where(id: id).first
+  end
+
+  def self.comment_by_id_by_dish(dish_id,id)
+    includes(:user,:dish)
+      .where(dish_id: dish_id).where(id: id).first
   end
 
   belongs_to :user

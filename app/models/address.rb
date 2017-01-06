@@ -2,11 +2,21 @@ class Address < ApplicationRecord
 
   default_scope {order('created_at DESC')}
 
-  def self.orders_from_address(id)
-    includes(orders: [:dish]).find_by_id(id)
+  def self.orders_by_address(id)
+    includes(:user,orders: [:dish]).find_by_id(id)
   end
 
-  def self.address_from_lat_and_lng(lat,lng,page = 1,per_page = 10)
+  def self.address_by_id_and_user(id,user_id)
+    includes(orders: [:dish]).where(id: id)
+      .where(user_id: user_id).first
+  end
+
+  def self.addresses_by_user(user_id,page = 1,per_page = 10)
+    includes(orders: [:dish]).where(user_id: user_id)
+      .paginate(:page => page, :per_page => per_page)
+  end
+
+  def self.address_by_lat_and_lng(lat,lng,page = 1,per_page = 10)
     includes(:user,:orders: [:dish]).where(lat: lat)
       .where(lng: lng)
       .paginate(:page=>page,:per_page)
