@@ -7,20 +7,34 @@ class Api::V1::OrdersController < ApplicationController
 
   def index
     if params.has_key?(:user_id)
-      render json: Order.orders_by_user_id(params[:user_id],@page,@per_page), status: :ok
+      @orders_user = Order.orders_by_user_id(params[:user_id],@page,@per_page)
+      if stale?(@orders_user)
+        render json: @orders_user, status: :ok
+      end
     elsif params.has_key?(:chef_id)
-      render json: Order.orders_by_chef_id(params[:chef_id],@page,@per_page),status: :ok
+      @orders_chef =  Order.orders_by_chef_id(params[:chef_id],@page,@per_page)
+      if stale?(@orders_chef)
+        render json: @orders_chef,status: :ok
+      end
     elsif params.has_key?(:dish_id)
-      render json: Order.orders_by_dish_id(params[:dish_id],@page,@per_page),status: :ok
+      @orders_dish = Order.orders_by_dish_id(params[:dish_id],@page,@per_page)
+      if stale?(@orders_dish)
+        render json: @orders_dish,status: :ok
+      end
     else
-      render json: Order.load_orders(@page,@per_page)
+      @orders = Order.load_orders(@page,@per_page)
+      if stale?(@orders)
+        render json: @orders,status: :ok
+      end
     end
 
   end
 
   def show
     if @order
-      render json: @order, status: :ok
+      if stale?(@order,public: true)
+        render json: @order, status: :ok
+      end
     else
       record_not_found
     end
@@ -33,7 +47,7 @@ class Api::V1::OrdersController < ApplicationController
       @order.address_id = params[:relationship][:address_id]
       @order.user_id = current_user.id
       dish = Dish.find_by_id(params[:relationship][:dish_id])
-      available = Availability.today.availabilities_by_dish(dish.id).first
+      available = Availability.availabilities_by_dish(dish.id).where(day: params[:order][:day]).first
       if available && available.count >= @order.count
         chef = dish.chef.id
         if chef == params[:relationsip][:chef_id]
@@ -82,7 +96,7 @@ class Api::V1::OrdersController < ApplicationController
     end
 
     def order_params
-      params.require(:order).permit(:count,:price,:comment)
+      params.require(:order).permit(:count,:price,:comment,:day,:estimated_time)
       params.require(:relationship).permit(:address_id,:chef_id,:dish_id)
     end
 

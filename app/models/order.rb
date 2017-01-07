@@ -1,5 +1,5 @@
 class Order < ApplicationRecord
-
+  include Utility
   default_scope {order("created_at DESC")}
 
   belongs_to :address
@@ -54,8 +54,8 @@ class Order < ApplicationRecord
   end
 
   def self.orders_today
-    includes(:address,:user,:dish,:chef)
-    .where(created_at: Date.today)
+    range = Date.today.beginning_of_day..Date.today.end_of_day
+    Order.query_orders(range)
   end
 
   def self.orders_by_user_by_dish_id(user_id,dish_id)
@@ -63,36 +63,23 @@ class Order < ApplicationRecord
   end
 
   def self.orders_yesterday
-    includes(:address,:user,:dish,:chef)
-    .where(created_at: (Date.today - 1.days))
+    range = Order.new.yesterday()
+    Order.query_orders(range)
   end
 
   def self.orders_week
-    today = Date.today
-    next_week = Date.today
-    if today.monday?
-      next_week = (today + 6.days).end_of_day
-    else
-      today = previous_day(today,1)
-      next_week = (today + 6.days).end_of_day
-    end
-    range = today..next_week
-    includes(:address,:user,:dish,:chef)
-    .where(created_at: range )
+    range = Order.new.week()
+    Order.query_orders(range)
   end
 
-  def self.orders_month(year,month)
-    date = Data.new(year,month,1).beginning_of_day
-    date_end = (data.end_of_month).end_of_day
-    includes(:address,:user,:dish,:chef)
-    .where(created_at: range)
+  def self.orders_month(year,month_number)
+    range = Order.new.month(year,month_number)
+    Order.query_orders(range)
   end
 
-  def self.orders_month(year)
-    date = Data.new(year,1,1).beginning_of_day
-    date_end = (data.end_of_year).end_of_day
-    includes(:address,:user,:dish,:chef)
-    .where(created_at: range)
+  def self.orders_month(year_number)
+    range = Order.new.year(year_number)
+    Order.query_orders(range)
   end
 
   enum payment_type: {
@@ -100,10 +87,15 @@ class Order < ApplicationRecord
     :cash => 1
   }
 
-  validates :count,:price,:payment_type,presence:true
+  validates :count,:price,:payment_type,:day,:estimated_time,presence:true
   validates :count,numericality: { greater_than_or_equal: 1 }
   validates :price,numericality: { greater_than_or_equal: 100 }
   validates :payment_type, presence: true
   validates :payment_type, inclusion: {in: payment_types.keys}
 
+  protected
+    def self.query_orders(range)
+      includes(:address,:user,:dish,:chef)
+      .where(day: range)
+    end
 end

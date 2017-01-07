@@ -3,12 +3,15 @@ class Api::V1::UsersController < ApplicationController
   before_action :set_user, only: [:show]
 
   def index
-    render json: User.load_users(@page,@per_page), status: :ok
+    @users =  User.load_users(@page,@per_page)
+    if stale?(@users)
+      render json: @users, status: :ok
+    end
   end
 
   def show
     if @user
-      if stale?(last_modified: @user.updated_at,public: true)
+      if stale?(@user,public: true)
         render json: @user, status: :ok
       end
     else

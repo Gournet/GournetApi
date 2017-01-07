@@ -5,12 +5,22 @@ class Api::V1::ImagesController < ApplicationController
   before_action :set_pagination, only: [:index]
 
   def index
-    render json: Images.images_from_dish(params[:dish_id],@page,@per_page), status: :ok
+    if params.has_key?(:dish_id)
+      @images = Images.images_from_dish(params[:dish_id],@page,@per_page)
+      if stale?(@images)
+        render json: @images, status: :ok
+      end
+    else
+      @images = Images.load_images(@page,@per_page)
+      if stale?(@images)
+        render json: @images, status: :ok
+      end
+    end
   end
 
   def show
     if @image
-      if stale?(last_modified: @image.updated_at)
+      if stale?(@image,public: true)
         render json: @image,status: :ok
       end
     else

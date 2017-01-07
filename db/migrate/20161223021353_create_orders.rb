@@ -4,6 +4,8 @@ class CreateOrders < ActiveRecord::Migration[5.0]
       t.integer :count, :null => false, :default => 1
       t.decimal :price
       t.text :comment
+      t.date :day
+      t.time :estimated_time
       t.references :address, foreign_key: true
       t.references :user, foreign_key: true
       t.references :dish, foreign_key: true

@@ -1,17 +1,21 @@
 class Api::V1::AddressesController < ApplicationController
   include ControllerUtility
-  before_action :authenticate_user!, only: [:create,:update,:destroy]
-  before_action :set_pagination, only: [:index]
+  before_action :authenticate_user!, only: [:create,:update]
+  devise_token_auth_group :member, contains: [:user, :admin]
+  before_action :authenticate_member, only: [:destroy]
+  before_action :set_pagination, only: [:index,:popular_addresses,:find_adddress_by_lat_and_lng,:addresses_with_orders]
   before_action :set_address, only: [:show,:update,:destroy]
-  before_action :set_addresses, only: [:index]
 
   def index
-    render json: @addresses, status: :ok
+    @addresses = Address.addresses_by_user(params[:user_id],@page,@per_page)
+    if stale?(@addresses,public: true)
+      render json: @addresses, status: :ok
+    end
   end
 
   def show
     if @address
-      if stale?(last_modified: @address.updated_at)
+      if stale?(@address,public: true)
         render json: @address, status: :ok
       end
     else
@@ -47,7 +51,7 @@ class Api::V1::AddressesController < ApplicationController
 
   def destroy
     if @address
-      if @address.user_id == current_user.id
+      if @address.user.id == current_member.id || current_member.is_a?(Admin)
         @address.destroy
         if @address.destroyed?
           record_success
@@ -62,6 +66,27 @@ class Api::V1::AddressesController < ApplicationController
     end
   end
 
+  def popular_addresses
+    @addresses = Address.popular_addresses_by_orders_and_user(params[:address][:user_id],@page,@per_page)
+    if stale?(@addresses,public: true)
+      render json: @addresses, status: :ok
+    end
+  end
+
+  def find_adddress_by_lat_and_lng
+    @addresses = Address.address_by_lat_and_lng(params[:address][:lat],params[:address][:lng],@page,@per_page)
+    if statle?(@addresses,public: true)
+      render json: @addresses, status: :ok
+    end
+  end
+
+  def addresses_with_orders
+    @addresses =  Address.addresses_with_orders(@page,@per_page)
+    if statle?(@addresses,public: true)
+      render json: @addresses, status: :ok
+    end
+  end
+
   private
     def set_pagination
       @page = params[:page][:number]
@@ -71,10 +96,6 @@ class Api::V1::AddressesController < ApplicationController
     end
     def set_address
       @address = Address.address_by_id_and_user(params[:id],params[:user_id])
-    end
-
-    def set_addresses
-      @addresses = Address.addresses_by_user(params[:user_id],@page,@per_page)
     end
 
     def address_params

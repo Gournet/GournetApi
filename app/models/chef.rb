@@ -32,31 +32,6 @@ class Chef < ActiveRecord::Base
       .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.orders_today(chef_id,page = 1, per_page = 10)
-    range = Date.today.beginning_of_day..Date.today.end_of_day
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_yesterday(chef_id,page = 1, per_page = 10)
-    range = Chef.new.yesterday()
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_week(chef_id,page = 1,per_page = 10)
-    range = Chef.new.week()
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_month(chef_id,year = 2016,month_mumber = 1,page = 1 ,per_page = 10)
-    range = Chef.new.month(year,month_number)
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_year(chef_id,year_number = 2016,page = 1, per_page = 10)
-    range = Chef.new.year(year_number)
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
   def self.chefs_with_dishes(page = 1, per_page = 10)
     joins(:dishes).select("chefs.*")
       .group("chefs.id")
@@ -103,13 +78,14 @@ class Chef < ActiveRecord::Base
     Chef.query_orders_chefs(range,page,per_page)
   end
 
+  def self.best_seller_chefs_per_month(year = 2016,month_number = 1)
+    range = Chef.new.month(year,month_number)
+    best_seller_chefs(range)
+  end
+
   def self.best_seller_chefs_per_year(year_number = 2016)
     range = Chef.new.year(year_number)
-    joins(:orders).select("chefs.*")
-      .where(orders: { created_at: range })
-      .group("chefs.id")
-      .reorder("COUNT(orders.id) DESC")
-      .limit(3)
+    best_seller_chefs(range)
   end
 
   has_many :dishes,-> {reorder('name ASC')}, dependent: :destroy
@@ -142,19 +118,20 @@ class Chef < ActiveRecord::Base
 
   protected
 
-    def self.query_orders(chef_id,date,page,per_page)
-      includes(orders: [:user,:dish,:address])
-        .where(orders: { created_at: date })
-        .where(id: chef_id)
-        .paginate(:page => page,:per_page => per_page)
-    end
-
     def self.query_orders_chefs(date,page,per_page)
       joins(:orders).select("chefs.*")
-        .where(orders: { created_at: date })
+        .where(orders: { day: date })
         .group("chefs.id")
         .paginate(:page => page, :per_page => per_page)
         .reorder("COUNT(orders.id) DESC")
+    end
+
+    def self.best_seller_chefs(range)
+      joins(:orders).select("chefs.*")
+        .where(orders: { created_at: range })
+        .group("chefs.id")
+        .reorder("COUNT(orders.id) DESC")
+        .limit(3)
     end
 
     def validate_date?

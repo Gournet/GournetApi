@@ -37,6 +37,11 @@ class Admin < ActiveRecord::Base
     where(email: email).first
   end
 
+  def self.search(text,page = 1,per_page = 10)
+    where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
+      .paginate(:page => page, :per_page => per_page)
+  end
+
   validates :name,:lastname,:username, presence: true
   validates :name, :lastname,length: {minimum: 3}
   validates :username, length: {minimum: 5} ,uniqueness:true

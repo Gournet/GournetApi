@@ -12,23 +12,23 @@ class User < ActiveRecord::Base
 
 
   def self.load_users(page = 1, per_page = 10)
-    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
     .paginate(:page => page,:per_page => per_page)
   end
 
   def self.user_by_id(id)
-    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
     .find_by_id(id)
   end
 
   def self.users_by_ids(ids,page = 1, per_page = 10)
-    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
     .where(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.users_by_not_ids(ids,page = 1, per_page = 10)
-    includes(:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
     .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
@@ -97,38 +97,14 @@ class User < ActiveRecord::Base
       reorder("COUNT(favorite_dishes)")
   end
 
-  def self.users_with_orders_today(page = 1,per_page = 10)
-    range = Date.today.beginning_of_day..Date.today.end_of_day
-    User.query_orders_users(range,page,per_page)
-  end
-
-  def self.users_with_orders_yesterday(page = 1, per_page = 10)
-    range = User.new.yesterday()
-    User.query_orders_users(range,page,per_page)
-  end
-
-  def self.users_with_orders_week(page = 1,per_page = 10)
-    range = User.new.week()
-    User.query_orders_users(range,page,per_page)
-  end
-
-  def self.users_with_orders_month(year = 2016,month_number = 1,page = 1,per_page = 10)
+  def self.best_seller_users_per_month(year = 2016,month_number = 1)
     range = User.new.month(year,month_number)
-    User.query_orders_users(range,page,per_page)
-  end
-
-  def self.users_with_orders_year(year_number = 2016)
-    range = User.new.year(year_number)
-    User.query_orders_users(range,page,per_page)
+    User.best_seller(range)
   end
 
   def self.best_seller_users_per_year(year_number = 2016)
     range = User.new.year(year_number)
-    joins(:orders).select("users.*")
-      .where(orders: { created_at: range })
-      .group("users.id")
-      .reorder("COUNT(orders.id) DESC")
-      .limit(3)
+    User.best_seller(range)
   end
 
 
@@ -142,6 +118,8 @@ class User < ActiveRecord::Base
   has_many :dishes, -> {order('name ASC')}, through: :favorite_dishes
   has_many :rating_dishes, ->{order('rating DESC')}, dependent: :nullify
   has_many :r_dishes,->{order('name ASC')}, through: :rating_dish, source: :dishes
+  has_many :comment_votes, dependent: :nullify
+  has_many :comments, ->{order('created_at DESC')}, through: :comment_votes
 
 
   validates :name, :lastname, presence: true
@@ -194,17 +172,17 @@ class User < ActiveRecord::Base
     end
   end
 
-  def self.query_orders_users(date,page,per_page)
+  def self.best_seller(range)
     joins(:orders).select("users.*")
-      .where(orders: { created_at: date })
+      .where(orders: { created_at: range })
       .group("users.id")
-      .paginate(:page => page, :per_page => per_page)
       .reorder("COUNT(orders.id) DESC")
+      .limit(3)
   end
 
   def self.query_orders(user_id,date,page,per_page)
     includes(orders: [:chef,:dish,:address])
-      .where(orders: { created_at: date } )
+      .where(orders: { day: date } )
       .where(id: user_id)
       .paginate(:page => page, :per_page => per_page)
   end

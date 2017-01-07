@@ -1,14 +1,18 @@
 class Api::V1::AlergiesController < ApplicationController
   before_action :authenticate_admin!, only: [:create,:update,:destroy]
   before_action :set_alergy, only: [:show,:create,:update]
-  before_action :set_pagination, only: [:index]
+  before_action :set_pagination, only: [:index,:alergies_by_ids, :alergies_by_not_ids,:alergies_with_users,:alergies_with_dishes,:alergies_with_dishes_and_users,:alergies_by_search]
+
   def index
-    render json: Alergy.load_alergies(@page,@per_page),status: :ok
+    @alergies = Alergy.load_alergies(@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies,status: :ok
+    end
   end
 
   def show
     if @alergy
-      if stale?(last_modified: @alergy.updated_at)
+      if stale?(@alergy, public: true)
         render @alergy, status: :ok
       end
     else
@@ -50,13 +54,57 @@ class Api::V1::AlergiesController < ApplicationController
     end
   end
 
+  def alergies_by_ids
+    @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies, status: :ok
+    end
+  end
+
+  def alergies_by_not_ids
+    @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies,status: :ok
+    end
+  end
+
+  def alergies_with_users
+    @alergies = Alergy.alergies_with_users(@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies, status: :ok
+    end
+  end
+
+  def alergies_with_dishes
+    @alergies = Alergy.alergies_with_dishes(@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies, status: :ok
+    end
+  end
+
+  def alergies_with_dishes_and_users
+    @alergies = Alergy.alergies_with_dishes_and_users(@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies,status: :ok
+    end
+  end
+
+  def alergies_by_search
+    @alergies = Alergy.search_name(params[:alergy][:name],@page,@per_page)
+    if stale?(@alergies,public: true)
+      render json: @alergies, status: :ok
+    end
+  end
+
   private
+
     def set_pagination
       @page = params[:page][:number]
       @per_page = params[:page][:size]
       @page ||= 1
       @per_page ||= 10
     end
+
     def set_alergy
       @alergy = Alergy.alergy_by_id(params[:id])
     end
@@ -64,4 +112,5 @@ class Api::V1::AlergiesController < ApplicationController
     def alergy_params
       params.require(:alergy).permit(:name,:description)
     end
+
 end

@@ -7,9 +7,8 @@ class Dish < ApplicationRecord
   scope :order_by_cooking_time, -> {reorder('cooking_time ASC')}
   scope :order_by_rating, -> {reorder('rating DESC')}
 
-
-  def self.popular_dishes_by_rating(page = 1, per_page = 10)
-    where("rating >= 3")
+  def self.popular_dishes_by_rating(rating = 2,page = 1, per_page = 10)
+    where(rating: rating)
     .paginate(:page => page, :per_page => per_page)
     .reorder("rating DESC")
   end
@@ -35,65 +34,67 @@ class Dish < ApplicationRecord
       .reorder("AVG(rating_dishes.rating) DESC, COUNT(comments.id) DESC")
   end
 
-  def self.popular_dishes_by_orders(page = 1, per_page = 10)
+  def self.dishes_with_orders(page = 1, per_page = 10)
     joins(:orders).select("dishes.*")
       .group("dishes.id")
       .paginate(:page => page,:per_page => per_page)
       .reorder("COUNT(orders.dish_id) DESC")
   end
 
-  def self.popular_dishes_by_orders_today(page = 1, per_page = 10)
+  def self.dishes_by_orders_today(page = 1, per_page = 10)
     range = Date.today.beginning_of_day..Date.today.end_of_day
     Dish.query_orders(range,page,per_page)
   end
 
-  def self.popular_dishes_by_orders_yesterday(page = 1, per_page = 10)
+  def self.dishes_by_orders_yesterday(page = 1, per_page = 10)
     range = Dish.new.yesterday()
     Dish.query_orders(range,page,per_page)
   end
 
-  def self.popular_dishes_by_orders_week(page = 1, per_page = 10)
+  def self.dishes_by_orders_week(page = 1, per_page = 10)
     range = Dish.new.week()
     Dish.query_orders(range,page,per_page)
   end
 
-  def self.popular_dishes_by_orders_month(year = 2016, month_number = 1, page = 1, per_page = 10)
+  def self.dishes_by_orders_month(year = 2016, month_number = 1, page = 1, per_page = 10)
     range = Dish.new.month(year,month_number)
     Dish.query_orders(range,page,per_page)
   end
 
-  def self.popular_dishes_by_orders_year(year_number = 2016,page = 1, per_page = 10)
+  def self.dishes_by_orders_year(year_number = 2016,page = 1, per_page = 10)
     range = Dish.new.year(year_number)
     Dish.query_orders(range,page,per_page)
   end
+
+  def self.best_seller_dishes_per_month(year = 2016, month_number = 1)
+    range = Dish.new.month(year,month_number)
+    Dish.best_seller(range)
+  end
+
   def self.best_seller_dishes_per_year(year_number = 2016)
     range = Dish.new.year(year_number)
-    joins(:orders).select("dishes.*")
-      .where(orders: { created_at: range })
-      .group("dishes.id")
-      .reorder("COUNT(orders.id) DESC")
-      .limit(3)
+    Dish.best_seller(range)
   end
 
   def self.dish_by_id(id)
-    includes(:images,:chef,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    includes(:images,:chef,:categories,:comments,:alergies,:users,orders: [:user,:address])
     .find_by_id(id)
   end
 
-  def self.dishes_by_ids(sids,page = 1,per_page = 10)
-    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+  def self.dishes_by_ids(ids,page = 1,per_page = 10)
+    includes(:images,:categories,:comments,:alergies,:users,orders: [:user,:address])
     .where(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.dishes_by_not_ids(ids,page = 1,per_page = 10)
-    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    includes(:images,:categories,:comments,:alergies,:users,orders: [:user,:address])
     .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.load_dishes(page = 1, per_page = 10)
-    includes(:images,:categories,orders: [:user,:address],:comments,:alergies,:users)
+    includes(:images,:categories,:comments,:alergies,:users,orders: [:user,:address])
     .paginate(:page => page, :per_page => per_page)
   end
 
@@ -120,12 +121,19 @@ class Dish < ApplicationRecord
   validates :calories,numericality: { greater_than: 0 }
 
   protected
-
+    def self.best_seller(range)
+      joins(:orders).select("dishes.*")
+        .where(orders: { created_at: range })
+        .group("dishes.id")
+        .reorder("COUNT(orders.id) DESC")
+        .limit(3)
+    end
     def self.query_orders(date,page,per_page)
-      dishes = joins(:orders).select("dishes.*")
-        .where(orders: {created_at: date })
+       joins(:orders).select("dishes.*")
+        .where(orders: {day: date })
         .group("dishes.id")
         .paginate(:page => page, :per_page => per_page)
         .reorder("COUNT(orders.dish_id) DESC")
     end
+
 end

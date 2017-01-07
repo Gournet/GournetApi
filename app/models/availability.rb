@@ -5,8 +5,8 @@ class Availability < ApplicationRecord
   default_scope {order('day ASC, count DESC')}
   scope :today, -> { includes(:dish).where('day = ?', Date.today )}
   scope :tomorrow, -> { includes(:dish).where('day = ?' ,Date.tomorrow)}
-  scope :next_six_days, -> { includes(:dish).where(day: (Date.today)..((Date.today + 6).end_of_day))}
-  scope :available_for_today, -> {today.where('count > 0')}
+  scope :next_seven_days, -> { includes(:dish).where(day: (Date.today)..(Date.today + 7))}
+  scope :available_count, -> {where('count > 0')}
 
   def self.availabilities_by_dish(dish_id,page = 1,per_page = 10)
     includes(:dish)
