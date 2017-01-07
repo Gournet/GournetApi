@@ -10,6 +10,22 @@ Rails.application.routes.draw do
       end
       resources :iamges, :only => [:index]
       resources :users,concerns: :ordered, :only => [:index,:show,:destroy] do
+        collection do
+          get 'usersByIds', to: "users#users_by_ids"
+          get 'usersByNotIds', to: "users#users_by_not_ids"
+          get 'ordersToday', to: "users#orders_today"
+          get 'ordersYesterday', to: "users#orders_yesterday"
+          get 'ordersWeek', to: "users#orders_week"
+          get 'ordersMonth', to: "users#orders_month"
+          get 'ordersYear', to: "users#orders_year"
+          get 'usersWithAddresses', to: "users#users_with_addresses"
+          get 'usersWithAlergies', to: "users#users_with_alergies"
+          get 'usersWithOrders', to: "users#users_with_orders"
+          get 'usersWithFavoriteDishes', to: "users#users_with_favorite_dishes"
+          get 'usersWithRatingDishes', to: "users#users_with_rating_dishes"
+          get 'bestSellerUserMonth', to: "users#best_seller_users_per_month"
+          get 'bestSellerUsersYear', to: "users#best_seller_users_per_year"
+        end
         resources :addresses do
           collection do
             get 'popularAddressesUser', to: "addresses#popular_addresses"
@@ -25,7 +41,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :admins, :only => [:index,:show,:destory] do
+      resources :admins, :only => [:index,:show,:destroy] do
         collection do
           get 'adminsByIds', to: "admins#admins_by_ids"
           get 'adminsByNotIds', to: "admins#admins_by_not_ids"
@@ -127,7 +143,17 @@ Rails.application.routes.draw do
           end
         end
       end
-      resources :orders, :only => [:show,:create,:index]
+      resources :orders, :only => [:show,:create,:index] do
+        collection do
+          get 'ordersByIds', to: "orders#orders_by_ids"
+          get 'ordersByNotIds',to: "orders#orders_by_not_ids"
+          get 'ordersToday', to: "orders#orders_today"
+          get 'ordersYesterday', to: "orders#orders_yesterday"
+          get 'ordersWeek', to: "orders#orders_week"
+          get 'ordersMonth', to: "ordders#orders_month"
+          get 'ordersYear', to: "orders#orders_year"
+        end
+      end
       resources :comments, :only => [:show,:index] do
         member do
           match 'addVote', to: "comments#add_vote", via: [:post,:put,:patch]

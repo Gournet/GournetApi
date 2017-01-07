@@ -33,26 +33,26 @@ class User < ActiveRecord::Base
     .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.orders_today(user_id,page = 1, per_page = 10)
+  def self.orders_today(page = 1, per_page = 10)
     range = Date.today.beginning_of_day..Date.today.end_of_day
     User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_yesterday(user_id,page = 1,per_page = 10)
+  def self.orders_yesterday(page = 1,per_page = 10)
     range = User.new.yesterday()
     User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_week(user_id,page = 1, per_page = 10)
+  def self.orders_week(page = 1, per_page = 10)
     range = User.new.week()
     User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_month(user_id,year = 2016,month = 1,page = 1,per_page = 10)
+  def self.orders_month(year = 2016,month = 1,page = 1,per_page = 10)
     User.query_orders(user_id,range,page,per_page)
   end
 
-  def self.orders_year(user_id,year = 2016,page = 1,per_page = 10)
+  def self.orders_year(year = 2016,page = 1,per_page = 10)
     range = User.new.year(year)
     User.query_orders(user_id,range,page,per_page)
   end
@@ -180,10 +180,9 @@ class User < ActiveRecord::Base
       .limit(3)
   end
 
-  def self.query_orders(user_id,date,page,per_page)
-    includes(orders: [:chef,:dish,:address])
+  def self.query_orders(date,page,per_page)
+    joins(:orders).select("users.*")
       .where(orders: { day: date } )
-      .where(id: user_id)
       .paginate(:page => page, :per_page => per_page)
   end
 

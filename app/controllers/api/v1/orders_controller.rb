@@ -1,7 +1,8 @@
 class Api::V1::OrdersController < ApplicationController
   include ControllerUtility
   before_action :authenticate_admin!, only: [:destroy]
-  before_action :set_pagination, only: [:index]
+  before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,
+  :orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year]
   before_action :set_order, only: [:show]
   before_action :authenticate_user!, only: [:create]
 
@@ -80,6 +81,55 @@ class Api::V1::OrdersController < ApplicationController
       end
     else
       record_not_found
+    end
+  end
+
+  def orders_by_ids
+    @orders = Orders.orders_by_ids(params[:orders][:ids],@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
+    end
+  end
+
+  def orders_by_not_ids
+    @orders = Orders.orders_by_not_ids(params[:orders][:ids],@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
+    end
+  end
+
+  def orders_today
+    @orders = Orders.orders_today(@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
+    end
+  end
+
+  def orders_yesterday
+    @orders = Orders.orders_today(@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
+    end
+  end
+
+  def orders_week
+    @orders = Orders.orders_week(@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
+    end
+  end
+
+  def orders_month
+    @orders = Orders.orders_month(params[:order][:year],params[:order][:month],@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
+    end
+  end
+
+  def orders_year
+    @orders = Orders.orders_year(params[:order][:year],@page,@per_page)
+    if stale?(@orders,public: true)
+      render json: @orders, status: :ok
     end
   end
 

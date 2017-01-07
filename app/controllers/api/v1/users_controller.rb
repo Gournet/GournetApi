@@ -1,6 +1,10 @@
 class Api::V1::UsersController < ApplicationController
-  before_action :set_pagination, only: [:index]
-  before_action :set_user, only: [:show]
+  include ControllerUtility
+  before_action :set_pagination, only: [:index,:users_by_ids,:users_by_not_ids,:orders_today,:orders_yesterday,
+  :orders_week,:orders_month,:orders_year,:users_with_addresses,:users_with_alergies,:users_with_orders,
+  :users_with_favorite_dishes,:users_with_rating_dishes]
+  before_action :set_user, only: [:show,:destroy]
+  before_action :authenticate_admin!, only: [:destroy]
 
   def index
     @users =  User.load_users(@page,@per_page)
@@ -20,6 +24,118 @@ class Api::V1::UsersController < ApplicationController
         error: "We can't find a valid record"
       }
     }, status: :not_found
+    end
+  end
+
+  def destroy
+    if @user
+      @user.destroy
+      if @user.destroyed?
+        record_success
+      else
+        record_error
+      end
+    else
+      record_not_found
+    end
+  end
+
+  def users_by_ids
+    @users = User.users_by_ids(params[:user][:ids],@page,@per_page)
+    if stale?(@users, public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def users_by_not_ids
+    @users = User.users_by_not_ids(params[:user][:ids],@page,@per_page)
+    if stale?(@users, public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def orders_today
+    @users = User.orders_today(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def orders_yesterday
+    @users = User.orders_yesterday(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def orders_week
+    @users = User.orders_week(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def orders_month
+    @users = User.orders_month(params[:user][:year],params[:user][:month],@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def orders_year
+    @users = User.orders_year(params[:user][:year],@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def users_with_addresses
+    @users = User.users_with_addresses(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def users_with_alergies
+    @users = User.users_with_alergies(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def users_with_orders
+    @users = User.users_with_alergies(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+
+  end
+
+  def users_with_favorite_dishes
+    @users = User.users_with_favorite_dishes(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def users_with_rating_dishes
+    @users = User.users_with_rating_dishes(@page,@per_page)
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def best_seller_users_per_month
+    @users = User.best_seller_users_per_month(params[:user][:year],params[:user][:month])
+    if stale?(@users,public: true)
+      render @users, status: :ok
+    end
+  end
+
+  def best_seller_users_per_year
+    @users = User.best_seller_users_per_year(params[:user][:year])
+    if stale?(@users,public: true)
+      render @users, status: :ok
     end
   end
 
