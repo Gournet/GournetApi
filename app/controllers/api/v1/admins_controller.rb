@@ -23,9 +23,13 @@ class Api::V1::AdminsController < ApplicationController
 
   def destroy
     if @admin
-      @admin.destroy
-      if @admin.destroyed?
-        record_success
+      if @admin.id !=  current_admin.id
+        @admin.destroy
+        if @user.destroyed?
+          record_success
+        else
+          record_error
+        end
       else
         record_error
       end
@@ -36,16 +40,12 @@ class Api::V1::AdminsController < ApplicationController
 
   def admins_by_ids
     @admins =  Admin.admins_by_ids(params[:admin][:ids],@page,@per_page)
-    if stale?(@admins,public: true)
-      render json: @admins, status: :ok
-    end
+    render json: @admins, status: :ok
   end
 
   def admins_by_not_ids
     @admins =  Admin.admins_by_not_ids(params[:admin][:ids],@page,@per_page)
-    if stale?(@admins,public: true)
-      render json: @admins, status: :ok
-    end
+    render json: @admins, status: :ok
   end
 
   def admin_by_username
@@ -72,8 +72,10 @@ class Api::V1::AdminsController < ApplicationController
   private
 
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end

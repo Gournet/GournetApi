@@ -159,8 +159,10 @@ class Api::V1::ChefsController < ApplicationController
   private
 
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end

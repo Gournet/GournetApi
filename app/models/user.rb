@@ -6,55 +6,86 @@ class User < ActiveRecord::Base
   include DeviseTokenAuth::Concerns::User,Utility
   mount_uploader :avatar, AvatarUploader
 
-  default_scope {order("name ASC, lastname ASC")}
-  scope :order_by_email, -> {reorder("email ASC")}
-  scope :order_by_username, -> {reorder("username ASC")}
+  default_scope {order("users.name ASC, users.lastname ASC")}
+  scope :order_by_email, -> {reorder("users.email ASC")}
+  scope :order_by_username, -> {reorder("users.username ASC")}
 
+
+  def self.search(text,page = 1,per_page = 10)
+    where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
+      .paginate(:page => page, :per_page => per_page)
+  end
 
   def self.load_users(page = 1, per_page = 10)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
     .paginate(:page => page,:per_page => per_page)
   end
 
   def self.user_by_id(id)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
     .find_by_id(id)
   end
 
   def self.users_by_ids(ids,page = 1, per_page = 10)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
     .where(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.users_by_not_ids(ids,page = 1, per_page = 10)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish])
+    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
     .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.orders_today(page = 1, per_page = 10)
     range = Date.today.beginning_of_day..Date.today.end_of_day
-    User.query_orders(user_id,range,page,per_page)
+    User.query_orders(range,page,per_page)
+  end
+
+  def self.orders_today_user(user)
+    range = Date.today.beginning_of_day..Date.today.end_of_day
+    User.query_orders_user(user,range)
   end
 
   def self.orders_yesterday(page = 1,per_page = 10)
     range = User.new.yesterday()
-    User.query_orders(user_id,range,page,per_page)
+    User.query_orders(range,page,per_page)
+  end
+
+  def self.orders_yesterday_user(user)
+    range = User.new.yesterday()
+    User.query_orders_user(user,range)
   end
 
   def self.orders_week(page = 1, per_page = 10)
     range = User.new.week()
-    User.query_orders(user_id,range,page,per_page)
+    User.query_orders(range,page,per_page)
   end
 
-  def self.orders_month(year = 2016,month = 1,page = 1,per_page = 10)
-    User.query_orders(user_id,range,page,per_page)
+  def self.orders_week_user(user)
+    range = User.new.week()
+    User.query_orders_user(user,range)
   end
 
-  def self.orders_year(year = 2016,page = 1,per_page = 10)
-    range = User.new.year(year)
-    User.query_orders(user_id,range,page,per_page)
+  def self.orders_month(year = 2016,month_number = 1,page = 1,per_page = 10)
+    range = User.new.month(year,month_number)
+    User.query_orders(range,page,per_page)
+  end
+
+  def self.orders_month_user(user,year = 2016,month_number = 1)
+    range = User.new.month(year,month_number)
+    User.query_orders_user(user,range)
+  end
+
+  def self.orders_year(year_number = 2016,page = 1,per_page = 10)
+    range = User.new.year(year_number)
+    User.query_orders(range,page,per_page)
+  end
+
+  def self.orders_year_user(user,year_number = 2016)
+    range = User.new.year(year_number)
+    User.query_orders_user(user,range)
   end
 
   def self.users_with_addresses(page = 1, per_page = 10)
@@ -91,10 +122,10 @@ class User < ActiveRecord::Base
   end
 
   def self.users_with_rating_dishes(page = 1, per_page = 10)
-    joins(:favorite_dishes).select("users.*")
+    joins(:rating_dishes).select("users.*")
       .group("users.id")
       .paginate(:page => page, :per_page => per_page)
-      reorder("COUNT(favorite_dishes)")
+      .reorder("COUNT(rating_dishes.id)")
   end
 
   def self.best_seller_users_per_month(year = 2016,month_number = 1)
@@ -108,18 +139,18 @@ class User < ActiveRecord::Base
   end
 
 
-  has_many :addresses, -> {order('created_at DESC')}, dependent: :destroy
+  has_many :addresses, -> {reorder('addresses.created_at DESC')}, dependent: :destroy
   has_many :alergy_by_users, dependent: :destroy
-  has_many :alergies,-> {order{'name ASC'}}, through: :alergy_by_users
-  has_many :orders, -> {order{'created_at DESC'}}, dependent: :nullify
+  has_many :alergies,-> {reorder('alergies.name ASC')}, through: :alergy_by_users
+  has_many :orders, -> {reorder('orders.created_at DESC')}, dependent: :nullify
   has_many :followers, dependent: :destroy
-  has_many :chefs, -> {order('name ASC')}, through: :followers
+  has_many :chefs, -> {reorder('chefs.name ASC')}, through: :followers
   has_many :favorite_dishes, dependent: :destroy
-  has_many :dishes, -> {order('name ASC')}, through: :favorite_dishes
-  has_many :rating_dishes, ->{order('rating DESC')}, dependent: :nullify
-  has_many :r_dishes,->{order('name ASC')}, through: :rating_dish, source: :dishes
+  has_many :dishes, -> {reorder('dishes.name ASC')}, through: :favorite_dishes
+  has_many :rating_dishes, dependent: :nullify
+  has_many :r_dishes, through: :rating_dish, source: :dishes
   has_many :comment_votes, dependent: :nullify
-  has_many :comments, ->{order('created_at DESC')}, through: :comment_votes
+  has_many :comments, ->{reorder('comments.created_at DESC')}, through: :comment_votes
 
 
   validates :name, :lastname, presence: true
@@ -181,9 +212,19 @@ class User < ActiveRecord::Base
   end
 
   def self.query_orders(date,page,per_page)
-    joins(:orders).select("users.*")
+    includes(:orders)
       .where(orders: { day: date } )
       .paginate(:page => page, :per_page => per_page)
+      .references(:orders)
+  end
+
+  def self.query_orders_user(user,date)
+    includes(orders: [:dish, :chef, :address])
+      .where(users: { id: user})
+      .where(orders: { day: date } )
+      .reorder("orders.day DESC")
+      .references(:orders)
+      .first
   end
 
 end

@@ -1,7 +1,7 @@
 class Image < ApplicationRecord
 
   mount_uploader :image, ImageUploader
-  default_scope {order("created_at DESC")}
+  default_scope {order("images.created_at DESC")}
 
 
   def self.images_by_dish_id(dish_id, page = 1, per_page = 10)

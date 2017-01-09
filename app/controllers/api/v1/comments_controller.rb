@@ -5,21 +5,17 @@ class Api::V1::CommentsController < ApplicationController
   before_action :set_pagination, only: [:index,:comments_by_dish,:comments_by_user,:comments_with_votes_by_dish]
 
   def index
+    @comments = nil
     if params.has_key?(:user_id)
-      @comments_user = Comment.comments_by_user(params[:user_id],@page,@per_page)
-      if stale?(@comments_user,public: true)
-        render json: @comments_user,status: :ok
-      end
+      @comments = Comment.comments_by_user(params[:user_id],@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @comments_dish = Comment.comments_by_dish(params[:dish_id],@page,@per_page)
-      if stale?(@comments_dish,public: true)
-        render json: @comments_dish,status: :ok
-      end
+      @comments = Comment.comments_by_dish(params[:dish_id],@page,@per_page)
     else
       @comments = Comment.load_comments(@page,@per_page)
-      if stale?(@comments, public: true)
-        render json: @comments, status: true
-      end
+    end
+
+    if stale?(@comments,public: true)
+      render json: @comments,status: :ok
     end
   end
 
@@ -106,8 +102,10 @@ class Api::V1::CommentsController < ApplicationController
 
   private
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end

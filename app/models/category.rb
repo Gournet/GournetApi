@@ -1,6 +1,6 @@
 class Category < ApplicationRecord
 
-  default_scope {order('name ASC')}
+  default_scope {order('categories.name ASC')}
 
 
   def self.search_name(name,page = 1,per_page = 10)
@@ -13,11 +13,11 @@ class Category < ApplicationRecord
   end
 
   def self.categories_by_ids(ids,page,per_page)
-    includes(:dishes).where(ids: ids)
+    includes(:dishes).where(id: ids)
       .paginate(:page => page, :per_page => per_page)
   end
   def self.categories_by_not_ids(ids,page,per_page)
-    includes(:dishes).where.not(ids: ids)
+    includes(:dishes).where.not(id: ids)
       .paginate(:page => page, :per_page => per_page)
   end
 
@@ -34,7 +34,7 @@ class Category < ApplicationRecord
   end
 
   has_many :category_by_dishes, dependent: :destroy
-  has_many :dishes, -> {reorder('name ASC')}, through: :category_by_dishes
+  has_many :dishes, -> {reorder('dishes.name ASC')}, through: :category_by_dishes
 
   validates :name,:description, presence: true
   validates :name, uniqueness: true

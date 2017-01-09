@@ -1,6 +1,6 @@
 class Comment < ApplicationRecord
 
-  default_scope {order('created_at DESC')}
+  default_scope {order('comments.created_at DESC')}
 
 
   def self.load_comments(page = 1,per_page = 10)
@@ -46,7 +46,7 @@ class Comment < ApplicationRecord
   belongs_to :dish
 
   has_many :comment_votes, dependent: :destroy
-  has_many :c_users, -> {reorder('name ASC, lastname ASC')} through: :comment_votes, source: :users
+  has_many :c_users, through: :comment_votes, source: :users
 
   validates :description, presence: true
   validates :description, length: { in: 10...250 }

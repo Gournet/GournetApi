@@ -6,9 +6,7 @@ class Api::V1::CategoriesController < ApplicationController
 
   def index
     @categories = Category.load_categories(@page,@per_page)
-    if stale?(@categories)
-      render json: @categories, status: :ok
-    end
+    render json: @categories, status: :ok
   end
 
   def show
@@ -57,40 +55,31 @@ class Api::V1::CategoriesController < ApplicationController
   end
 
   def categories_by_ids
-    category_params_ids
     @categories = Category.categories_by_ids(params[:category][:ids],@page,@per_page)
-    if stale?(@categories,public: true)
-      render json: @categories, status: true
-    end
+    render json: @categories, status: :ok
   end
 
   def categories_by_not_ids
-    category_params_ids
     @categories = Category.categories_by_not_ids(params[:category][:ids],@page,@per_page)
-    if stale?(@categories,public: true)
-      render json: @categories,status: true
-    end
+    render json: @categories,status: :ok
   end
 
   def categories_with_dishes
     @categories = Category.categories_with_dishes(@page,@per_page)
-    if stale?(@categories, public: true)
-      render json: @categories, status: :ok
-    end
+    render json: @categories, status: :ok
   end
 
   def categories_by_search
-    category_params_search
     @categories = Category.search_name(params[:category][:name],@page,@per_page)
-    if stale?(@categories,public: true)
-      render json: @categories,status: :ok
-    end
+    render json: @categories,status: :ok
   end
 
   private
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end
@@ -101,14 +90,6 @@ class Api::V1::CategoriesController < ApplicationController
 
     def category_params
       params.require(:category).permit(:name,:description)
-    end
-
-    def category_params_ids
-      params.require(:category).permit(:ids => [])
-    end
-
-    def category_params_search
-      params.require(:category).permit(:name)
     end
 
 end

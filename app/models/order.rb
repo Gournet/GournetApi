@@ -1,6 +1,6 @@
 class Order < ApplicationRecord
   include Utility
-  default_scope {order("created_at DESC")}
+  default_scope {order("orders.day DESC")}
 
   belongs_to :address
   belongs_to :user

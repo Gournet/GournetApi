@@ -1,32 +1,29 @@
 class Api::V1::OrdersController < ApplicationController
   include ControllerUtility
   before_action :authenticate_admin!, only: [:destroy]
-  before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,
-  :orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year]
+  before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,:orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year]
   before_action :set_order, only: [:show]
   before_action :authenticate_user!, only: [:create]
 
   def index
+    @orders = nil
     if params.has_key?(:user_id)
-      @orders_user = Order.orders_by_user_id(params[:user_id],@page,@per_page)
-      if stale?(@orders_user)
-        render json: @orders_user, status: :ok
-      end
+      @orders = Order.orders_by_user_id(params[:user_id],@page,@per_page)
+
     elsif params.has_key?(:chef_id)
-      @orders_chef =  Order.orders_by_chef_id(params[:chef_id],@page,@per_page)
-      if stale?(@orders_chef)
-        render json: @orders_chef,status: :ok
-      end
+      @orders =  Order.orders_by_chef_id(params[:chef_id],@page,@per_page)
+
     elsif params.has_key?(:dish_id)
-      @orders_dish = Order.orders_by_dish_id(params[:dish_id],@page,@per_page)
+      @orders = Order.orders_by_dish_id(params[:dish_id],@page,@per_page)
       if stale?(@orders_dish)
         render json: @orders_dish,status: :ok
       end
     else
       @orders = Order.load_orders(@page,@per_page)
-      if stale?(@orders)
-        render json: @orders,status: :ok
-      end
+
+    end
+    if stale?(@orders)
+      render json: @orders,status: :ok
     end
 
   end
@@ -63,6 +60,7 @@ class Api::V1::OrdersController < ApplicationController
           end
         else
           order_dish_errors
+        end
       else
         order_quantity_errors
       end
@@ -135,8 +133,10 @@ class Api::V1::OrdersController < ApplicationController
 
   private
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end

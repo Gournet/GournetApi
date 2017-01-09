@@ -7,9 +7,9 @@ class Chef < ActiveRecord::Base
   mount_uploader :avatar, AvatarUploader
 
 
-  default_scope {order('name ASC, lastname ASC')}
-  scope :order_by_email, -> {reorder('email ASC')}
-  scope :order_by_username, -> {reorder('username ASC')}
+  default_scope {order('chefs.name ASC, chefs.lastname ASC')}
+  scope :order_by_email, -> {reorder('chefs.email ASC')}
+  scope :order_by_username, -> {reorder('chefs.username ASC')}
 
   def self.load_chefs(page = 1, per_page = 10)
     includes(:dishes,:users,orders: [:user,:dish,:address])
@@ -88,10 +88,10 @@ class Chef < ActiveRecord::Base
     best_seller_chefs(range)
   end
 
-  has_many :dishes,-> {reorder('name ASC')}, dependent: :destroy
+  has_many :dishes,-> {reorder('dishes.name ASC')}, dependent: :destroy
   has_many :followers, dependent: :destroy
-  has_many :users,-> {reorder('name ASC, lastname ASC')}, through: :followers
-  has_many :orders,-> {reorder('created_at DESC')}, dependent: :nullify
+  has_many :users,-> {reorder('users.name ASC, users.lastname ASC')}, through: :followers
+  has_many :orders,-> {reorder('orders.created_at DESC')}, dependent: :nullify
 
   enum type_chef:{
     :profesional => 0,

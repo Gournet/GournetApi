@@ -12,7 +12,7 @@ class ApplicationController < ActionController::API
       devise_parameter_sanitizer.permit(:sign_up, keys: [:username,:name,:lastname,:avatar,:mobile])
       devise_parameter_sanitizer.permit(:account_update,keys: [:name,:lastname,:avatar,:mobile,:current_password])
     else
-      devise_parameter_sanitizer.permit(:sign_up, keys: [:username,:name,:lastname,:avatar,:mobile,:type,:description,:speciality,:expertise,:food_types,:birthday])
+      devise_parameter_sanitizer.permit(:sign_up, keys: [:username,:name,:lastname,:avatar,:mobile,:type_chef,:description,:speciality,:expertise,:food_types,:birthday])
       devise_parameter_sanitizer.permit(:account_update,keys: [:name,:lastname,:avatar,:mobile,:description,:speciality,:expertise,:type,:food_types,:current_password])
     end
 

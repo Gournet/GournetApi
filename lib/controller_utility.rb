@@ -61,8 +61,6 @@ module ControllerUtility
   end
 
   def record_success
-    render json: {data: {
-        status: "Success",
-      }
-    },status: :no_content
+    head :no_content
   end
+end

@@ -1,6 +1,6 @@
 class RatingDish < ApplicationRecord
 
-  default_scope {order("created_at DESC")}
+  default_scope {order("rating_dishes.created_at DESC")}
   after_save :update_rating_dish
   after_destroy :update_rating_dish
 

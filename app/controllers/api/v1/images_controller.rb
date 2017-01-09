@@ -1,21 +1,20 @@
 class Api::V1::ImagesController < ApplicationController
   include ControllerUtility
-  before_action :authenticate_chef, only: [:create,:update,:destroy]
+  before_action :authenticate_chef!, only: [:create,:update]
+  devise_token_auth_group :member, contains: [:chef, :admin]
+  before_action :authenticate_member!, only: [:destroy]
   before_action :set_image, only: [:show,:update,:destroy]
   before_action :set_pagination, only: [:index]
 
   def index
+    @images = nil
     if params.has_key?(:dish_id)
       @images = Images.images_from_dish(params[:dish_id],@page,@per_page)
-      if stale?(@images)
-        render json: @images, status: :ok
-      end
     else
       @images = Images.load_images(@page,@per_page)
-      if stale?(@images)
-        render json: @images, status: :ok
-      end
     end
+    render json: @images, status: :ok
+
   end
 
   def show
@@ -58,7 +57,7 @@ class Api::V1::ImagesController < ApplicationController
   def destroy
     if @image
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
-      if chef.id == current_chef.id
+      if chef.id == current_member.id || current_member.is_a?(Admin)
         @image.destroy
         if @image.destroyed?
           record_success
@@ -75,8 +74,10 @@ class Api::V1::ImagesController < ApplicationController
 
   private
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end

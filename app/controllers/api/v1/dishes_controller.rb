@@ -4,16 +4,20 @@ class Api::V1::DishesController < ApplicationController
   devise_token_auth_group :member, contains: [:chef, :admin]
   before_action :authenticate_member!, only: [:destroy]
   before_action :authenticate_user!, only: [:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
-  before_action :set_dish, only: [:show.:destroy,:update,:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
+  before_action :set_dish, only: [:show,:destroy,:update,:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
   before_action :set_pagination, only: [:index,:dishes_by_ids,:dishes_by_not_ids,:popular_dishes_by_rating_grather_than,:dishes_by_price,
   :dishes_by_calories,:dishes_by_cooking_time,:dishes_by_rating,:dishes_with_rating,:dishes_with_comments,:dishes_with_rating_and_comments,
   :dishes_with_orders,:dishes_with_orders_today,:dishes_with_orders_yesterday,:dishes_with_orders_week,:dishes_with_orders_month,:dishes_with_orders_year]
 
   def index
-    @dishes =  Dish.load_dishes(@page,@per_page)
-    if stale?(@dishes)
-      render json: @dishes,status: :ok
+    @dishes = nil
+    if params.has_key?(:chef_id)
+      @dishes =  Dish.dish_by_chef(params[:chef_id],@page,@per_page)
+    else
+      @dishes =  Dish.load_dishes(@page,@per_page)
     end
+    render json: @dishes,status: :ok
+
   end
 
   def show
@@ -28,7 +32,7 @@ class Api::V1::DishesController < ApplicationController
 
   def create
     @dish =  Dish.new(dish_params)
-    @dish.chef_id = params[:chef_id]
+    @dish.chef_id = current_chef.id
     if @dish.save
       render json: @dish, status: :ok
     else
@@ -38,10 +42,14 @@ class Api::V1::DishesController < ApplicationController
 
   def update
     if @dish
-      if @dish.update(dish_params)
-        render json: @dish,status: :ok
+      if @dish.chef_id == current_chef.id
+        if @dish.update(dish_params)
+          render json: @dish,status: :ok
+        else
+          record_errors(@dish)
+        end
       else
-        record_errors(@dish)
+        operation_not_allowed
       end
     else
       record_not_found
@@ -252,8 +260,10 @@ class Api::V1::DishesController < ApplicationController
 
   private
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end

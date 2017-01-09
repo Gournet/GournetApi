@@ -2,21 +2,16 @@ class Api::V1::AvailabilitiesController < ApplicationController
   include ControllerUtility
   before_action :authenticate_chef!, only: [:create,:update,:destroy]
   before_action :set_availability, only: [:update,:destroy]
-  before_action :set_pagination, only: [:index,:today,:tomorrow,:next_seven_day,:tomorrow_with_count,:today_with_count,:availabilities_by_dish]
+  before_action :set_pagination, only: [:index,:today,:tomorrow,:next_seven_days,:tomorrow_with_count,:today_with_count,:availabilities_by_dish]
 
   def index
+    @availabilities = nil
     if params.has_key?(:dish_id)
       @availabilities = Availability.availabilities_by_dish(params[:dish_id],@page,@per_page)
-      if stale?(@availabilities)
-        render json: @availabilities, status: :ok
-      end
     else
       @availabilities = Availability.load_availabilities(@page,@per_page)
-      if stale?(@availabilities)
-        render json: @availabilities, status: :ok
-      end
     end
-
+    render json: @availabilities, status: :ok
   end
 
   def show
@@ -31,6 +26,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
   def create
     @availability = Availability.new(availability_params)
+    @availability.dish_id = params[:dish_id]
     if @availability.save()
       render json: @availability, status: :ok
     else
@@ -76,51 +72,36 @@ class Api::V1::AvailabilitiesController < ApplicationController
   end
 
   def today
-    @availabilities = Availability.today.paginate(@page,@per_page)
-    if stale?(@availabilities,public: true)
-      render json: @availabilities,status: :ok
-    end
+    @availabilities = Availability.today.paginate(:page => @page,:per_page => @per_page)
+    render json: @availabilities,status: :ok
   end
 
   def tomorrow
-    @availabilities = Availability.tomorrow.paginate(@page,@per_page)
-    if stale?(@availabilities,public: true)
-      render json: @availabilities, status: :ok
-    end
+    @availabilities = Availability.tomorrow.paginate(:page => @page,:per_page => @per_page)
+    render json: @availabilities, status: :ok
   end
 
   def next_seven_days
-    @availabilites = Availability.next_seven_days.paginate(@page,@per_page)
-    if stale?(@availabilities,public: true)
-      render json: @availabilities,status: :ok
-    end
+    @availabilites = Availability.next_seven_days(@page,@per_page)
+    render json: @availabilites,status: :ok
   end
 
   def today_with_count
-    @availabilities = Availability.today.available_count.paginate(@page,@per_page)
-    if stale?(@availabilities,public: true)
-      render json: @availabilities,status: :ok
-    end
+    @availabilities = Availability.today.available_count.paginate(:page => @page,:per_page => @per_page)
+    render json: @availabilities,status: :ok
   end
 
   def tomorrow_with_count
-    @availabilities = Availability.tomorrow.available_count.paginate(@page,@per_page)
-    if stale?(@availabilities,public: true)
-      render json: @availabilities,status: :ok
-    end
-  end
-
-  def availabilities_by_dish
-    @availabilities =  Availability.availabilities_by_dish(params[:dish_id])
-    if stale?(@availabilities,public: true)
-      render json: @availabilities,status: :ok
-    end
+    @availabilities = Availability.tomorrow.available_count.paginate(:page => @page,:per_page => @per_page)
+    render json: @availabilities,status: :ok
   end
 
   private
     def set_pagination
-      @page = params[:page][:number]
-      @per_page = params[:page][:size]
+      if params.has_key?(:page)
+        @page = params[:page][:number].to_i
+        @per_page = params[:page][:size].to_i
+      end
       @page ||= 1
       @per_page ||= 10
     end
@@ -130,7 +111,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
     end
 
     def availability_params
-      params.require(:availability).require(:day,:count,:available,:end_time,:repeat)
+      params.require(:availability).permit(:day,:count,:available,:end_time,:repeat)
     end
 
 end

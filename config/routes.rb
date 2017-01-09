@@ -9,10 +9,19 @@ Rails.application.routes.draw do
         resources :orders, only: [:index,:show]
       end
       resources :iamges, :only => [:index]
+
+      resources :addresses, :only => [:index,:create,:update,:destroy,:show] do
+        collection do
+          get 'addressesByLatLng', to: "addresses#find_adddress_by_lat_and_lng"
+          get 'addressesWithOrders', to: "addresses#addresses_with_orders"
+        end
+      end
+
       resources :users,concerns: :ordered, :only => [:index,:show,:destroy] do
         collection do
-          get 'usersByIds', to: "users#users_by_ids"
-          get 'usersByNotIds', to: "users#users_by_not_ids"
+          get 'search', to: "users#search"
+          post 'usersByIds', to: "users#users_by_ids"
+          post 'usersByNotIds', to: "users#users_by_not_ids"
           get 'ordersToday', to: "users#orders_today"
           get 'ordersYesterday', to: "users#orders_yesterday"
           get 'ordersWeek', to: "users#orders_week"
@@ -26,11 +35,16 @@ Rails.application.routes.draw do
           get 'bestSellerUserMonth', to: "users#best_seller_users_per_month"
           get 'bestSellerUsersYear', to: "users#best_seller_users_per_year"
         end
-        resources :addresses do
+        member do
+          get 'ordersToday', to: "users#orders_today_user"
+          get 'ordersYesterday', to: "users#orders_yesterday_user"
+          get 'ordersWeek', to: "users#orders_week_user"
+          get 'ordersMonth', to: "users#orders_month_user"
+          get 'ordersYear', to: "users#orders_year_user"
+        end
+        resources :addresses, only: [:index,:show] do
           collection do
             get 'popularAddressesUser', to: "addresses#popular_addresses"
-            get 'addressesByLatLng', to: "addresses#find_adddress_by_lat_and_lng"
-            get 'addressesByOrders', to: "addresses#addresses_with_orders"
           end
         end
         resources :comments, except: [:create] do
@@ -43,13 +57,12 @@ Rails.application.routes.draw do
 
       resources :admins, :only => [:index,:show,:destroy] do
         collection do
-          get 'adminsByIds', to: "admins#admins_by_ids"
-          get 'adminsByNotIds', to: "admins#admins_by_not_ids"
+          post 'adminsByIds', to: "admins#admins_by_ids"
+          post 'adminsByNotIds', to: "admins#admins_by_not_ids"
           get 'adminByUsername', to: "admins#admin_by_username"
-          get 'adminByEmail', to: "admmins#admin_by_email"
+          get 'adminByEmail', to: "admins#admin_by_email"
           get 'adminsBySearch', to: "admins#admins_by_search"
         end
-        resources :orders, only: [:destroy,:index,:show]
       end
 
       resources :chefs,concerns: :ordered, :only => [:index,:show,:destroy] do
@@ -71,18 +84,18 @@ Rails.application.routes.draw do
           match 'follow', to: "chefs#follow", via: [:post,:put,:patch]
           match 'unfollow', to: "chefs#unfollow", via: [:delete]
         end
-        resources :dishes, :only => [:create,:update,:destroy]
+        resources :dishes, :only => [:index,:show]
       end
-      resources :availabilities, :only => [:index] do
+      resources :availabilities, :only => [:index,:show] do
         collection do
           get 'today', to: "availabilities#today"
           get 'tomorrow', to: "availabilities#tomorrow"
-          get 'nextSevenDasy', to: "availabilities#next_seven_days"
+          get 'nextSevenDays', to: "availabilities#next_seven_days"
           get 'todayCount', to: "availabilities#today_with_count"
           get 'tomorrowCount', to: "availabilities#tomorrow_with_count"
         end
       end
-      resources :dishes, concerns: :ordered, :only => [:index,:show] do
+      resources :dishes, concerns: :ordered do
         collection do
           get 'dishesByIds', to: "dishes#dishes_by_ids"
           get 'dishesByNotIds', to: "dishes#dishes_by_not_ids"
@@ -109,11 +122,7 @@ Rails.application.routes.draw do
           match 'addFavorite', to: "dishes#add_favorite_dish", via: [:post,:put,:patch]
           match 'removeFavorite', to: "dishes#remove_favorite_dish", via: [:delete]
         end
-        resources :availabilities do
-          collection do
-            get 'availabilitiesByDish', to: "availabilities#availabilities_by_dish"
-          end
-        end
+        resources :availabilities
         resources :comments do
           collection do
             get 'commentsByDish', to: "comments#comments_by_dish"
@@ -123,11 +132,11 @@ Rails.application.routes.draw do
         resources :images
       end
 
-      scope "/admins" do
+      scope "/administrator" do
         resources :alergies do
           collection do
-            get 'alergiesByIds', to: "alergies#alergies_by_ids"
-            get 'alergiesByNotIds', to: "alergies#alergies_by_not_ids"
+            post 'alergiesByIds', to: "alergies#alergies_by_ids"
+            post 'alergiesByNotIds', to: "alergies#alergies_by_not_ids"
             get 'alergiesWithUsers', to: "alergies#alergies_with_users"
             get 'alergiesWithDishes', to: "alergies#alergies_with_dishes"
             get 'alergiesWithDishesAndUsers', to: "alergies#alergies_with_dishes_and_users"
@@ -136,14 +145,14 @@ Rails.application.routes.draw do
         end
         resources :categories do
           collection do
-            get 'categoriesByIds', to: "categories#categories_by_ids"
-            get 'categoriesByNotIds', to: "categories#categories_by_not_ids"
+            post 'categoriesByIds', to: "categories#categories_by_ids"
+            post 'categoriesByNotIds', to: "categories#categories_by_not_ids"
             get 'categoriesWithDishes', to: "categories#categories_with_dishes"
             get 'categoriesBySearch', to: "categories#categories_by_search"
           end
         end
       end
-      resources :orders, :only => [:show,:create,:index] do
+      resources :orders, :only => [:show,:create,:index,:destroy] do
         collection do
           get 'ordersByIds', to: "orders#orders_by_ids"
           get 'ordersByNotIds',to: "orders#orders_by_not_ids"
