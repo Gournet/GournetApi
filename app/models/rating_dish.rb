@@ -1,7 +1,8 @@
 class RatingDish < ApplicationRecord
 
-  default_scope {order("created_at DESC")}
+  default_scope {order("rating_dishes.created_at DESC")}
   after_save :update_rating_dish
+  after_destroy :update_rating_dish
 
   belongs_to :user
   belongs_to :dish
@@ -17,6 +18,14 @@ class RatingDish < ApplicationRecord
     new_rating.save
   end
 
+  def self.remove_rating(user_id,dish_id)
+    rating = where(user_id: user_id).where(dish_id: dish_id).first
+    if rating
+      rating.destroy
+    end
+    rating
+  end
+
   def self.rating_by_dishes(ids)
     where(:dish_id => ids).group(:dish_id).reorder("avg(rating) DESC").average(:rating)
   end
@@ -29,6 +38,7 @@ class RatingDish < ApplicationRecord
     def update_rating_dish
       dish = Dish.find_by_id(self.dish_id)
       dish.rating = RatingDish.rating_by_dishes([self.dish_id])[self.dish_id]
+      dish.rating ||= 0.0
       dish.save
     end
 

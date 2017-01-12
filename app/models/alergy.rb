@@ -1,9 +1,9 @@
 class Alergy < ApplicationRecord
 
-    default_scope {order('name ASC')}
+    default_scope {order('alergies.name ASC')}
 
     def self.search_name(name,page = 1,per_page = 10)
-      includes(:dishes,:users).where("name LIKE ?," "#{name.downcase}%")
+      includes(:dishes,:users).where("alergies.name LIKE ?", "#{name.downcase}%")
         .paginate(:page => page, :per_page => per_page)
     end
 
@@ -48,9 +48,9 @@ class Alergy < ApplicationRecord
     end
 
     has_many :alergy_by_users, dependent: :destroy
-    has_many :users, -> {reorder('name ASC, lastname ASC')}, through: :alery_by_users
+    has_many :users, -> {reorder('users.name ASC, users.lastname ASC')}, through: :alergy_by_users
     has_many :alergy_by_dishes, dependent: :destroy
-    has_many :dishes, -> {reorder('name ASC')}, through: :alergy_by_dishes
+    has_many :dishes, -> {reorder('dishes.name ASC')}, through: :alergy_by_dishes
 
     validates :name, :description, presence: true
     validates :name, uniqueness: true

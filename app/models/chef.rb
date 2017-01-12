@@ -7,9 +7,9 @@ class Chef < ActiveRecord::Base
   mount_uploader :avatar, AvatarUploader
 
 
-  default_scope {order('name ASC, lastname ASC')}
-  scope :order_by_email, -> {reorder('email ASC')}
-  scope :order_by_username, -> {reorder('username ASC')}
+  default_scope {order('chefs.name ASC, chefs.lastname ASC')}
+  scope :order_by_email, -> {reorder('chefs.email ASC')}
+  scope :order_by_username, -> {reorder('chefs.username ASC')}
 
   def self.load_chefs(page = 1, per_page = 10)
     includes(:dishes,:users,orders: [:user,:dish,:address])
@@ -18,7 +18,7 @@ class Chef < ActiveRecord::Base
 
   def self.chef_by_id(chef_id)
     includes(:dishes,:users,orders: [:user,:dish,:address])
-      .find_by_id(id)
+      .find_by_id(chef_id)
   end
 
   def self.chefs_by_ids(chef_ids,page = 1, per_page = 10)
@@ -26,35 +26,11 @@ class Chef < ActiveRecord::Base
       .where(id: chef_ids)
       .paginate(:page => page, :per_page => per_page)
   end
+
   def self.chefs_by_not_ids(chef_ids,page = 1, per_page = 10)
     includes(:dishes,:users,orders: [:user,:dish,:address])
       .where.not(id: chef_ids)
       .paginate(:page => page, :per_page => per_page)
-  end
-
-  def self.orders_today(chef_id,page = 1, per_page = 10)
-    range = Date.today.beginning_of_day..Date.today.end_of_day
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_yesterday(chef_id,page = 1, per_page = 10)
-    range = Chef.new.yesterday()
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_week(chef_id,page = 1,per_page = 10)
-    range = Chef.new.week()
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_month(chef_id,year = 2016,month_mumber = 1,page = 1 ,per_page = 10)
-    range = Chef.new.month(year,month_number)
-    Chef.query_orders(chef_id,range,page,per_page)
-  end
-
-  def self.orders_year(chef_id,year_number = 2016,page = 1, per_page = 10)
-    range = Chef.new.year(year_number)
-    Chef.query_orders(chef_id,range,page,per_page)
   end
 
   def self.chefs_with_dishes(page = 1, per_page = 10)
@@ -80,42 +56,68 @@ class Chef < ActiveRecord::Base
 
   def self.chefs_with_orders_today(page = 1,per_page = 10)
     range = Date.today.beginning_of_day..Date.today.end_of_day
-    Chef.query_orders_chefs(range,page,per_page)
+    Chef.query_orders(range,page,per_page)
+  end
+
+  def self.orders_today(chef)
+    range = Date.today.beginning_of_day..Date.today.end_of_day
+    Chef.query_orders_chef(chef,range)
   end
 
   def self.chefs_with_orders_yesterday(page = 1, per_page = 10)
     range = Chef.new.yesterday()
-    Chef.query_orders_chefs(range,page,per_page)
+    Chef.query_orders(range,page,per_page)
+  end
+
+  def self.orders_yesterday(chef)
+    range = Chef.new.yesterday()
+    Chef.query_orders_chef(chef,range)
   end
 
   def self.chefs_with_orders_week(page = 1,per_page = 10)
     range = Chef.new.week()
-    Chef.query_orders_chefs(range,page,per_page)
+    Chef.query_orders(range,page,per_page)
+  end
+
+  def self.orders_week(chef)
+    range = Chef.new.week()
+    Chef.query_orders_chef(chef,range)
   end
 
   def self.chefs_with_orders_month(year = 2016,month_number = 1,page = 1,per_page = 10)
     range = Chef.new.month(year,month_number)
-    Chef.query_orders_chefs(range,page,per_page)
+    Chef.query_orders(range,page,per_page)
   end
 
-  def self.chefs_with_orders_year(year_number = 2016)
+  def self.orders_month(chef, year = 2016, month_number = 1)
+    range = Chef.new.month(year,month_number)
+    Chef.query_orders_chef(chef,range)
+  end
+
+  def self.chefs_with_orders_year(year_number = 2016,page = 1, per_page = 10)
     range = Chef.new.year(year_number)
-    Chef.query_orders_chefs(range,page,per_page)
+    Chef.query_orders(range,page,per_page)
+  end
+
+  def self.orders_year(chef,year_number = 2016)
+    range = Chef.new.year(year_number)
+    Chef.query_orders_chef(chef,range)
+  end
+
+  def self.best_seller_chefs_per_month(year = 2016,month_number = 1)
+    range = Chef.new.month(year,month_number)
+    best_seller_chefs(range)
   end
 
   def self.best_seller_chefs_per_year(year_number = 2016)
     range = Chef.new.year(year_number)
-    joins(:orders).select("chefs.*")
-      .where(orders: { created_at: range })
-      .group("chefs.id")
-      .reorder("COUNT(orders.id) DESC")
-      .limit(3)
+    best_seller_chefs(range)
   end
 
-  has_many :dishes,-> {reorder('name ASC')}, dependent: :destroy
+  has_many :dishes,-> {reorder('dishes.name ASC')}, dependent: :destroy
   has_many :followers, dependent: :destroy
-  has_many :users,-> {reorder('name ASC, lastname ASC')}, through: :followers
-  has_many :orders,-> {reorder('created_at DESC')}, dependent: :nullify
+  has_many :users,-> {reorder('users.name ASC, users.lastname ASC')}, through: :followers
+  has_many :orders,-> {reorder('orders.created_at DESC')}, dependent: :nullify
 
   enum type_chef:{
     :profesional => 0,
@@ -142,19 +144,30 @@ class Chef < ActiveRecord::Base
 
   protected
 
-    def self.query_orders(chef_id,date,page,per_page)
-      includes(orders: [:user,:dish,:address])
-        .where(orders: { created_at: date })
-        .where(id: chef_id)
-        .paginate(:page => page,:per_page => per_page)
-    end
-
-    def self.query_orders_chefs(date,page,per_page)
-      joins(:orders).select("chefs.*")
-        .where(orders: { created_at: date })
+    def self.query_orders(date,page,per_page)
+      includes(orders: [:dish,:user])
+        .where(orders: {day: date})
         .group("chefs.id")
         .paginate(:page => page, :per_page => per_page)
+        .reorder("count(orders.id)")
+        .references(:orders)
+    end
+
+    def self.query_orders_chef(chef,date)
+      includes(orders: [:dish,:user])
+        .where(orders: {day: date})
+        .where(chefs: {id: chef})
+        .reorder("orders.day")
+        .references(:orders)
+        .first
+    end
+
+    def self.best_seller_chefs(range)
+      joins(:orders).select("chefs.*")
+        .where(orders: { created_at: range })
+        .group("chefs.id")
         .reorder("COUNT(orders.id) DESC")
+        .limit(3)
     end
 
     def validate_date?

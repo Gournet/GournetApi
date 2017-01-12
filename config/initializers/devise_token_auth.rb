@@ -33,7 +33,7 @@ DeviseTokenAuth.setup do |config|
   # attribute updates. Set it to :password if you want it to be checked only if
   # password is updated.
   # config.check_current_password_before_update = :attributes
-  config.check_current_password_before_update = :password
+  #config.check_current_password_before_update = :password
 
 
   # By default we will use callbacks for single omniauth.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161228165543) do
+ActiveRecord::Schema.define(version: 20170107184854) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -150,13 +150,23 @@ ActiveRecord::Schema.define(version: 20161228165543) do
     t.index ["uid", "provider"], name: "index_chefs_on_uid_and_provider", unique: true, using: :btree
   end
 
+  create_table "comment_votes", force: :cascade do |t|
+    t.integer  "is_possitive", default: 1
+    t.integer  "user_id"
+    t.integer  "comment_id"
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
+    t.index ["comment_id"], name: "index_comment_votes_on_comment_id", using: :btree
+    t.index ["user_id", "comment_id"], name: "index_comment_votes_on_user_id_and_comment_id", unique: true, using: :btree
+    t.index ["user_id"], name: "index_comment_votes_on_user_id", using: :btree
+  end
+
   create_table "comments", force: :cascade do |t|
     t.text     "description"
-    t.integer  "is_possitive"
     t.integer  "user_id"
     t.integer  "dish_id"
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
     t.index ["dish_id"], name: "index_comments_on_dish_id", using: :btree
     t.index ["user_id"], name: "index_comments_on_user_id", using: :btree
   end
@@ -204,15 +214,17 @@ ActiveRecord::Schema.define(version: 20161228165543) do
   end
 
   create_table "orders", force: :cascade do |t|
-    t.integer  "count",        default: 1, null: false
+    t.integer  "count",          default: 1, null: false
     t.decimal  "price"
     t.text     "comment"
+    t.date     "day"
+    t.time     "estimated_time"
     t.integer  "address_id"
     t.integer  "user_id"
     t.integer  "dish_id"
     t.integer  "chef_id"
-    t.datetime "created_at",               null: false
-    t.datetime "updated_at",               null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
     t.integer  "payment_type"
     t.index ["address_id"], name: "index_orders_on_address_id", using: :btree
     t.index ["chef_id"], name: "index_orders_on_chef_id", using: :btree
@@ -273,6 +285,8 @@ ActiveRecord::Schema.define(version: 20161228165543) do
   add_foreign_key "availabilities", "dishes"
   add_foreign_key "category_by_dishes", "categories"
   add_foreign_key "category_by_dishes", "dishes"
+  add_foreign_key "comment_votes", "comments"
+  add_foreign_key "comment_votes", "users"
   add_foreign_key "comments", "dishes"
   add_foreign_key "comments", "users"
   add_foreign_key "dishes", "chefs"

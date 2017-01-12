@@ -12,7 +12,7 @@ module Utility
     if today.monday?
       next_week = (today + 6.days).end_of_day
     else
-      today = Chef.previous_day(today,1)
+      today = previous_day(today,1)
       next_week = (today + 6.days).end_of_day
     end
     range = today..next_week
@@ -34,5 +34,5 @@ module Utility
     range = date..date_end
   end
 
-  
+
 end

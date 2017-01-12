@@ -6,9 +6,9 @@ class Admin < ActiveRecord::Base
   include DeviseTokenAuth::Concerns::User
   mount_uploader :avatar, AvatarUploader
 
-  default_scope {order('name ASC, lastname ASC')}
-  scope :order_by_username, -> {reorder('username ASC')}
-  scope :order_by_email, -> {reorder('email ASC')}
+  default_scope {order('admins.name ASC, admins.lastname ASC')}
+  scope :order_by_username, -> {reorder('admins.username ASC')}
+  scope :order_by_email, -> {reorder('admins.email ASC')}
 
   def self.admin_by_id(id)
     find_by_id(id)
@@ -19,7 +19,7 @@ class Admin < ActiveRecord::Base
     .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.admins_by_ids(ids)
+  def self.admins_by_ids(ids, page = 1 ,per_page = 10)
     where(id:ids)
     .paginate(:page => page, :per_page => per_page)
   end
@@ -35,6 +35,11 @@ class Admin < ActiveRecord::Base
 
   def self.admin_by_email(email)
     where(email: email).first
+  end
+
+  def self.search(text,page = 1,per_page = 10)
+    where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
+      .paginate(:page => page, :per_page => per_page)
   end
 
   validates :name,:lastname,:username, presence: true
