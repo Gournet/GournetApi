@@ -55,3 +55,9 @@ gem 'will_paginate', '~> 3.1.0'
 gem 'carrierwave', '~> 1.0'
 gem "fog"
 gem 'mini_magick'
+
+#pretty print
+gem "awesome_print", require:"ap"
+
+#request limit
+gem 'rack-attack'

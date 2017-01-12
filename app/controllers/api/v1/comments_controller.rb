@@ -33,7 +33,7 @@ class Api::V1::CommentsController < ApplicationController
     @comment.user_id =  current_user.id
     @comment.dish_id =  params[:dish_id]
     if @comment.save
-      render json: @comment, status: :created
+      render json: @comment, status: :created, :location => api_v1_comment_path(@comment)
     else
       record_errors(@comment)
     end

@@ -28,7 +28,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
     @availability = Availability.new(availability_params)
     @availability.dish_id = params[:dish_id]
     if @availability.save()
-      render json: @availability, status: :created
+      render json: @availability, status: :created, :location => api_v1_availability_path(@availability)
     else
       record_errors(@availabilty)
     end

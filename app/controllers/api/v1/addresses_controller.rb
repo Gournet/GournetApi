@@ -30,7 +30,7 @@ class Api::V1::AddressesController < ApplicationController
     @address = Address.new(address_params)
     @address.user_id = current_user.id
     if @address.save
-      render json: @address, status: :created
+      render json: @address, status: :created, :location => api_v1_address_path(@address)
     else
       record_errors(@address)
     end

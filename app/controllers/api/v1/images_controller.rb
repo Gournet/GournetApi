@@ -31,7 +31,7 @@ class Api::V1::ImagesController < ApplicationController
     @image = Image.new(image_params)
     @image.dish_id = params[:dish_id]
     if @image.save
-      render json: @image, status: :created
+      render json: @image, status: :created, :location => api_v1_image_path(@image)
     else
       record_errors(@image)
     end

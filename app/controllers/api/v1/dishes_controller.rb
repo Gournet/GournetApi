@@ -34,7 +34,7 @@ class Api::V1::DishesController < ApplicationController
     @dish =  Dish.new(dish_params)
     @dish.chef_id = current_chef.id
     if @dish.save
-      render json: @dish, status: :created
+      render json: @dish, status: :created, :location => api_v1_dish_path(@dish)
     else
       record_errors(@dish)
     end

@@ -54,7 +54,7 @@ class Api::V1::OrdersController < ApplicationController
           available.count = available.count - @order.count
           available.save
           if @order.save
-            render json: @order,status: :created
+            render json: @order,status: :created, :location => api_v1_order_path(@order)
           else
             record_errors(@order)
           end
