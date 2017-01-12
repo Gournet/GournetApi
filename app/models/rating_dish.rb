@@ -38,6 +38,7 @@ class RatingDish < ApplicationRecord
     def update_rating_dish
       dish = Dish.find_by_id(self.dish_id)
       dish.rating = RatingDish.rating_by_dishes([self.dish_id])[self.dish_id]
+      dish.rating ||= 0.0
       dish.save
     end
 

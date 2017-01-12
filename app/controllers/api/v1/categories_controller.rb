@@ -22,7 +22,7 @@ class Api::V1::CategoriesController < ApplicationController
   def create
     @category = Category.new(category_params)
     if @category.save
-      render json: @category,status: :ok
+      render json: @category,status: :created
     else
       record_errors(@category)
     end

@@ -34,7 +34,7 @@ class Api::V1::DishesController < ApplicationController
     @dish =  Dish.new(dish_params)
     @dish.chef_id = current_chef.id
     if @dish.save
-      render json: @dish, status: :ok
+      render json: @dish, status: :created
     else
       record_errors(@dish)
     end
@@ -74,135 +74,125 @@ class Api::V1::DishesController < ApplicationController
   end
 
   def dishes_by_ids
-    @dishes = Dish.dishes_by_ids(params[:chef][:ids],@page, @per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    @dishes = Dish.dishes_by_ids(params[:dish][:ids],@page, @per_page)
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_not_ids
-    @dishes = Dish.dishes_by_not_ids(params[:chef][:ids],@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    @dishes = Dish.dishes_by_not_ids(params[:dish][:ids],@page,@per_page)
+    render json: @dishes, status: :ok
   end
 
-  def popular_dishes_by_rating_grather_than
-    @dishes = Dish.popular_dishes_by_rating(params[:chef][:rating],@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+  def popular_dishes_by_rating_greater_than
+    @dishes = Dish.popular_dishes_by_rating(params[:dish][:rating].to_i,@page,@per_page)
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_price
-    @dishes = Dish.all.paginate(@page,@per_page).order_by_price
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: true
-    end
+    @dishes = Dish.all.paginate(:page => @page,:per_page =>@per_page).order_by_price
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_calories
-    @dishes = Dish.all.paginate(@page,@per_page).order_by_calories
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    @dishes = Dish.all.paginate(:page => @page,:per_page => @per_page).order_by_calories
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_cooking_time
-    @dishes = Dish.all.paginate(@page, @per_page).order_by_cooking_time
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    @dishes = Dish.all.paginate(:page => @page, :per_page =>@per_page).order_by_cooking_time
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_rating
-    @dishes = Dish.all.paginate(@page,@per_page).order_by_rating
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    @dishes = Dish.all.paginate(:page => @page,:per_page => @per_page).order_by_rating
+    render json: @dishes, status: :ok
   end
 
   def dishes_with_rating
     @dishes = Dish.dishes_with_rating(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    render json: @dishes, status: :ok
   end
 
   def dishes_with_comments
     @dishes = Dish.dishes_with_comments(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    render json: @dishes, status: :ok
   end
 
   def dishes_with_rating_and_comments
     @dishes = Dish.dihses_with_rating_and_comments(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    render json: @dishes, status: :ok
   end
 
   def dishes_with_orders
     @dishes = Dish.dishes_with_orders(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    render json: @dishes,status: :ok
   end
 
   def dishes_by_orders_today
     @dishes = Dish.dishes_by_orders_today(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    render json: @dishes,status: :ok
+  end
+
+  def orders_today
+    @dishes = Dish.orders_today(params[:id])
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_orders_yesterday
     @dishes = Dish.dishes_by_orders_yesterday(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    render json: @dishes,status: :ok
+  end
+
+  def orders_yesterday
+    @dishes = Dish.orders_yesterday(params[:id])
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_orders_week
     @dishes = Dish.dishes_by_orders_week(@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    render json: @dishes,status: :ok
+  end
+
+  def orders_week
+    @dishes = Dish.orders_week(params[:id])
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_orders_month
-    @dishes = Dish.dishes_by_orders_month(params[:dish][:year],params[:dish][:month],@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    @dishes = Dish.dishes_by_orders_month(params[:dish][:year].to_i,params[:dish][:month].to_i,@page,@per_page)
+    render json: @dishes,status: :ok
+  end
+
+  def orders_month
+    @dishes = Dish.orders_month(params[:id],params[:dish][:year].to_i,params[:dish][:month].to_i)
+    render json: @dishes, status: :ok
   end
 
   def dishes_by_orders_year
-    @dishes = Dish.dishes_by_orders_year(params[:dish][:year],@page,@per_page)
-    if stale?(@dishes,public: true)
-      render json: @dishes, status: :ok
-    end
+    @dishes = Dish.dishes_by_orders_year(params[:dish][:year].to_i,@page,@per_page)
+    render json: @dishes, status: :ok
+  end
+
+  def orders_year
+    @dishes = Dish.orders_year(params[:id],params[:dish][:year].to_i)
+    render json: @dishes, status: :ok
+
   end
 
   def best_seller_dishes_per_month
-    @dishes = Dish.best_seller_dishes_per_month(params[:dish][:year],params[:dish][:month])
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    @dishes = Dish.best_seller_dishes_per_month(params[:dish][:year].to_i,params[:dish][:month].to_i)
+    render json: @dishes,status: :ok
   end
 
   def best_seller_dishes_per_year
-    @dishes = Dish.best_seller_dishes_per_year(params[:dish][:year])
-    if stale?(@dishes,public: true)
-      render json: @dishes,status: :ok
-    end
+    @dishes = Dish.best_seller_dishes_per_year(params[:dish][:year].to_i)
+    render json: @dishes,status: :ok
   end
 
   def add_favorite_dish
     if @dish
       favorite = FavoriteDish.new(user_id: current_user.id,dish_id: @dish.id)
-      if favorite.save
+      if FavoriteDish.add_favorite(current_user.id,@dish.id)
         record_success
       else
         record_error
@@ -226,9 +216,8 @@ class Api::V1::DishesController < ApplicationController
 
   def remove_favorite_dish
     if @dish
-      favorite = FavoriteDish.where(user_id: current_user.id).where(dish_id: @dish.id).first
+      favorite = FavoriteDish.remove_favorite(current_user.id,@dish.id)
       if favorite
-        favorite.destroy
         if favorite.destroyed?
           record_success
         else
@@ -237,6 +226,7 @@ class Api::V1::DishesController < ApplicationController
       else
         record_not_found
       end
+    else
       record_not_found
     end
   end
@@ -267,9 +257,11 @@ class Api::V1::DishesController < ApplicationController
       @page ||= 1
       @per_page ||= 10
     end
+
     def set_dish
       @dish = Dish.dish_by_id(params[:id])
     end
+
     def dish_params
       params.require(:dish).permit(:name,:description,:price,:cooking_time,:calories)
     end

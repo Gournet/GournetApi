@@ -7,7 +7,7 @@ class Image < ApplicationRecord
   def self.images_by_dish_id(dish_id, page = 1, per_page = 10)
     includes(:dish).where(dish_id: dish_id)
     .paginate(:page => page, :per_page => per_page)
-    .reorder("order ASC")
+    .reorder("images.order ASC")
   end
 
   def self.load_images(page = 1, per_page = 10)
@@ -15,11 +15,7 @@ class Image < ApplicationRecord
     .paginate(:page => page, :per_page => per_page)
   end
 
-  def self.images_by_dish(dish_id, page = 1, per_page  = 10)
-    includes(:dish)
-      .where(dish_id: dish_id)
-      .paginate(:page => page ,:per_page => per_page)
-  end
+
 
   def self.image_by_id(id)
     includes(:dish).where(id: id).first

@@ -10,12 +10,12 @@ class ImageUploader < CarrierWave::Uploader::Base
   def initialize(*)
     super
     self.fog_credentials = {
-      provider           => 'Rackspace',
+      :provider           => 'Rackspace',
       :rackspace_username => ENV["RACKSPACE_USERNAME"],
       :rackspace_api_key  => ENV["RACKSPACE_API_KEY"],
       :rackspace_region    => :dfw
     }
-    config.fog_directory = 'gournet_dishes'
+    self.fog_directory = 'gournet_dishes'
   end
 
   def extension_whitelist

@@ -9,9 +9,9 @@ class Api::V1::ImagesController < ApplicationController
   def index
     @images = nil
     if params.has_key?(:dish_id)
-      @images = Images.images_from_dish(params[:dish_id],@page,@per_page)
+      @images = Image.images_by_dish_id(params[:dish_id],@page,@per_page)
     else
-      @images = Images.load_images(@page,@per_page)
+      @images = Image.load_images(@page,@per_page)
     end
     render json: @images, status: :ok
 
@@ -31,7 +31,7 @@ class Api::V1::ImagesController < ApplicationController
     @image = Image.new(image_params)
     @image.dish_id = params[:dish_id]
     if @image.save
-      render json: @image, status: :ok
+      render json: @image, status: :created
     else
       record_errors(@image)
     end
@@ -40,7 +40,7 @@ class Api::V1::ImagesController < ApplicationController
   def update
     if @image
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
-      if chef.id == current_chef.id
+      if chef == current_chef.id
         if @image.update(image_params)
           render json: @image, status: :ok
         else
@@ -57,7 +57,7 @@ class Api::V1::ImagesController < ApplicationController
   def destroy
     if @image
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
-      if chef.id == current_member.id || current_member.is_a?(Admin)
+      if chef == current_member.id || current_member.is_a?(Admin)
         @image.destroy
         if @image.destroyed?
           record_success

@@ -22,7 +22,7 @@ class Api::V1::AlergiesController < ApplicationController
   def create
     @alergy = Alergy.new(alergy_params)
     if @alergy.save
-      render json: @alergy, status: :ok
+      render json: @alergy, status: :created
     else
       record_errors(@alergy)
     end

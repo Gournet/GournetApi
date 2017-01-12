@@ -148,7 +148,7 @@ class User < ActiveRecord::Base
   has_many :favorite_dishes, dependent: :destroy
   has_many :dishes, -> {reorder('dishes.name ASC')}, through: :favorite_dishes
   has_many :rating_dishes, dependent: :nullify
-  has_many :r_dishes, through: :rating_dish, source: :dishes
+  has_many :r_dishes, through: :rating_dish, source: :dish
   has_many :comment_votes, dependent: :nullify
   has_many :comments, ->{reorder('comments.created_at DESC')}, through: :comment_votes
 
@@ -212,9 +212,11 @@ class User < ActiveRecord::Base
   end
 
   def self.query_orders(date,page,per_page)
-    includes(:orders)
+    includes(orders: [:dish, :chef, :address])
       .where(orders: { day: date } )
+      .group("users.id")
       .paginate(:page => page, :per_page => per_page)
+      .reorder("COUNT(orders.id) DESC")
       .references(:orders)
   end
 

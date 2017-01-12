@@ -21,22 +21,22 @@ class Comment < ApplicationRecord
   end
 
   def self.comment_by_id(id)
-    includes(:user,:dish,:c_users).find_by_id(id)
+    includes(:user,:dish,:c_users,:comment_votes).find_by_id(id)
   end
 
-  def self.comment_by_id_by_user(user_id,id)
+  def self.comment_by_id_by_user(user_id)
     includes(:user,:dish,:c_users,:comment_votes)
-      .where(user_id: user_id).where(id: id).first
+      .where(user_id: user_id)
   end
 
-  def self.comment_by_id_by_dish(dish_id,id)
+  def self.comment_by_id_by_dish(dish_id)
     includes(:user,:dish,:c_users,:comment_votes)
-      .where(dish_id: dish_id).where(id: id).first
+      .where(dish_id: dish_id)
   end
 
   def self.comments_with_votes_by_dish(dish_id,page = 1, per_page = 10)
     joins(:comment_votes).select("comments.*")
-      .where(comment: {dish_id: dish_id})
+      .where(comments: {dish_id: dish_id})
       .group("comments.id")
       .paginate(:page => page, :per_page => per_page)
       .reorder("SUM(comment_votes.is_possitive) DESC")
@@ -46,7 +46,7 @@ class Comment < ApplicationRecord
   belongs_to :dish
 
   has_many :comment_votes, dependent: :destroy
-  has_many :c_users, through: :comment_votes, source: :users
+  has_many :c_users, through: :comment_votes, source: :user
 
   validates :description, presence: true
   validates :description, length: { in: 10...250 }

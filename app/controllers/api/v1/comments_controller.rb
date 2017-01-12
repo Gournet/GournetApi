@@ -1,6 +1,8 @@
 class Api::V1::CommentsController < ApplicationController
   include ControllerUtility
-  before_action :authenticate_user!, only: [:create,:update,:destroy,:add_vote]
+  before_action :authenticate_user!, only: [:create,:update,:add_vote]
+  devise_token_auth_group :member, contains: [:user, :admin]
+  before_action :authenticate_member!, only: [:destroy]
   before_action :set_comment, only: [:show,:update,:destroy]
   before_action :set_pagination, only: [:index,:comments_by_dish,:comments_by_user,:comments_with_votes_by_dish]
 
@@ -13,10 +15,7 @@ class Api::V1::CommentsController < ApplicationController
     else
       @comments = Comment.load_comments(@page,@per_page)
     end
-
-    if stale?(@comments,public: true)
-      render json: @comments,status: :ok
-    end
+    render json: @comments,status: :ok
   end
 
   def show
@@ -34,7 +33,7 @@ class Api::V1::CommentsController < ApplicationController
     @comment.user_id =  current_user.id
     @comment.dish_id =  params[:dish_id]
     if @comment.save
-      render json: @comment, status: :ok
+      render json: @comment, status: :created
     else
       record_errors(@comment)
     end
@@ -58,7 +57,7 @@ class Api::V1::CommentsController < ApplicationController
 
   def destroy
     if @comment
-      if @comment.user.id == current_user.id
+      if @comment.user.id == current_member.id || current_member.is_a?(Admin)
         @comment.destroy
         if @comment.destroyed?
           record_success
@@ -73,32 +72,18 @@ class Api::V1::CommentsController < ApplicationController
     end
   end
 
-  def comments_by_dish
-    @comments = Comment.comments_by_dish(params[:dish_id],@page,@per_page)
-    if stale?(@comments,public: true)
-      render json: @comments, status: :ok
-    end
-  end
-
-  def comments_by_user
-    @comments = Comment.comments_by_user(params[:user_id],@page,@per_page)
-    if stale?(@comments,public: true)
-      render json: @comments, status: :ok
-    end
-  end
-
   def comments_with_votes_by_dish
     @comments = Comment.comments_with_votes_by_dish(params[:dish_id],@page,@per_page)
-    if stale?(@comments,public: true)
-      render json: @comments, status: true
-    end
+    render json: @comments, status: :ok
   end
 
   def add_vote
-    comment_params_vote
-    CommentVote.add_vote(current_user.id,params[:id],params[:comment][:vote])
+    if CommentVote.add_vote(current_user.id,params[:id],params[:comment][:vote])
+      record_success
+    else
+      record_error
+    end
   end
-
 
   private
     def set_pagination
@@ -113,18 +98,9 @@ class Api::V1::CommentsController < ApplicationController
     def comment_params
       params.require(:comment).permit(:description)
     end
-    def comment_params_vote
-      params.require(:comment).permit(:vote)
-    end
 
     def set_comment
-      if params.has_key?(:dish_id)
-        @comment =  Comment.comment_by_id_by_dish(params[:dish_id],params[:id])
-      elsif params.has_key?(:user_id)
-        @comment =  Comment.comment_by_id_by_user(params[:user_id],params[:id])
-      else
-        @comment = Comment.comment_by_id(params[:id])
-      end
+      @comment = Comment.comment_by_id(params[:id])
     end
 
 end

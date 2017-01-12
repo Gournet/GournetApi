@@ -6,9 +6,17 @@ Rails.application.routes.draw do
         post 'loginFacebook', to: "facebook#create_facebook_account"
       end
       concern :ordered do
-        resources :orders, only: [:index,:show]
+        resources :orders, only: [:index] do
+          collection do
+            get 'ordersToday', to: "orders#orders_today_resource"
+            get 'ordersYesterday', to: "orders#orders_yesterday_resource"
+            get 'ordersWeek', to: "orders#orders_week_resource"
+            get 'ordersMonth', to: "orders#orders_month_resource"
+            get 'ordersYear', to: "orders#orders_year_resource"
+          end
+        end
       end
-      resources :iamges, :only => [:index]
+      resources :images, :only => [:index,:show,:destroy]
 
       resources :addresses, :only => [:index,:create,:update,:destroy,:show] do
         collection do
@@ -47,12 +55,7 @@ Rails.application.routes.draw do
             get 'popularAddressesUser', to: "addresses#popular_addresses"
           end
         end
-        resources :comments, except: [:create] do
-          collection do
-            get 'commentsByUser', to: "comments#comments_by_user"
-          end
-
-        end
+        resources :comments, only: [:show,:index]
       end
 
       resources :admins, :only => [:index,:show,:destroy] do
@@ -67,8 +70,8 @@ Rails.application.routes.draw do
 
       resources :chefs,concerns: :ordered, :only => [:index,:show,:destroy] do
         collection do
-          get 'chefsByIds', to: "chefs#chefs_by_ids"
-          get 'chefsByNotIds', to: "chefs#chefs_by_not_ids"
+          post 'chefsByIds', to: "chefs#chefs_by_ids"
+          post 'chefsByNotIds', to: "chefs#chefs_by_not_ids"
           get 'chefsWithDishes', to: "chefs#chefs_with_dishes"
           get 'chefsWithFollowers', to: "chefs#chefs_with_followers"
           get 'chefsWithOrders', to: "chefs#chefs_with_orders"
@@ -81,6 +84,11 @@ Rails.application.routes.draw do
           get 'bestSellerChefsYear', to: "chefs#best_seller_chefs_per_year"
         end
         member do
+          get 'ordersToday', to: "chefs#orders_today"
+          get 'ordersYesterday', to: "chefs#orders_yesterday"
+          get 'ordersWeek', to: "chefs#orders_week"
+          get 'ordersMonth', to: "chefs#orders_month"
+          get 'ordersYear', to: "chefs#orders_year"
           match 'follow', to: "chefs#follow", via: [:post,:put,:patch]
           match 'unfollow', to: "chefs#unfollow", via: [:delete]
         end
@@ -97,9 +105,9 @@ Rails.application.routes.draw do
       end
       resources :dishes, concerns: :ordered do
         collection do
-          get 'dishesByIds', to: "dishes#dishes_by_ids"
-          get 'dishesByNotIds', to: "dishes#dishes_by_not_ids"
-          get 'popularDishesByRatingGratherThan', to: "dishes#popular_dishes_by_rating_grather_than"
+          post 'dishesByIds', to: "dishes#dishes_by_ids"
+          post 'dishesByNotIds', to: "dishes#dishes_by_not_ids"
+          get 'popularDishesByRatingGreaterThan', to: "dishes#popular_dishes_by_rating_greater_than"
           get 'dishesByPrice', to: "dishes#dishes_by_price"
           get 'dishesByCalories', to: "dishes#dishes_by_calories"
           get 'dishesByCookingTime', to: "dishes#dishes_by_cooking_time"
@@ -121,11 +129,15 @@ Rails.application.routes.draw do
           match 'removeRating', to: "dishes#remove_rating_dish", via: [:delete]
           match 'addFavorite', to: "dishes#add_favorite_dish", via: [:post,:put,:patch]
           match 'removeFavorite', to: "dishes#remove_favorite_dish", via: [:delete]
+          get 'ordersToday', to: "dishes#orders_today"
+          get 'ordersYesterday', to: "dishes#orders_yesterday"
+          get 'ordersWeek', to: "dishes#orders_week"
+          get 'ordersMonth', to: "dishes#orders_month"
+          get 'ordersYear', to: "dishes#orders_year"
         end
         resources :availabilities
-        resources :comments do
+        resources :comments, :only => [:show,:index,:create] do
           collection do
-            get 'commentsByDish', to: "comments#comments_by_dish"
             get 'commentsWithVotesByDish', to: "comments#comments_with_votes_by_dish"
           end
         end
@@ -154,16 +166,16 @@ Rails.application.routes.draw do
       end
       resources :orders, :only => [:show,:create,:index,:destroy] do
         collection do
-          get 'ordersByIds', to: "orders#orders_by_ids"
-          get 'ordersByNotIds',to: "orders#orders_by_not_ids"
+          post 'ordersByIds', to: "orders#orders_by_ids"
+          post 'ordersByNotIds',to: "orders#orders_by_not_ids"
           get 'ordersToday', to: "orders#orders_today"
           get 'ordersYesterday', to: "orders#orders_yesterday"
           get 'ordersWeek', to: "orders#orders_week"
-          get 'ordersMonth', to: "ordders#orders_month"
+          get 'ordersMonth', to: "orders#orders_month"
           get 'ordersYear', to: "orders#orders_year"
         end
       end
-      resources :comments, :only => [:show,:index] do
+      resources :comments, except: [:create] do
         member do
           match 'addVote', to: "comments#add_vote", via: [:post,:put,:patch]
         end

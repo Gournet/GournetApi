@@ -14,7 +14,7 @@ class Api::V1::AdminsController < ApplicationController
   def show
     if @admin
       if stale?(@admin,public: true)
-        render json: @admin, status: ok
+        render json: @admin, status: :ok
       end
     else
       record_not_found

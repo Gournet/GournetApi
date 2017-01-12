@@ -9,9 +9,7 @@ class Api::V1::ChefsController < ApplicationController
 
   def index
     @chefs = Chef.load_chefs(@page,@per_page)
-    if stale?(@chefs)
-      render json: @chefs,status: :ok
-    end
+    render json: @chefs,status: :ok
   end
 
   def show
@@ -38,97 +36,93 @@ class Api::V1::ChefsController < ApplicationController
   end
 
   def chefs_by_ids
-    chef_params_ids
-    @chefs = Chef.chefs_by_ids(paramas[:chef][:ids],@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    @chefs = Chef.chefs_by_ids(params[:chef][:ids],@page,@per_page)
+    render json: @chefs,status: :ok
   end
 
   def chefs_by_not_ids
-    chef_params_ids
     @chefs = Chef.chefs_by_not_ids(params[:chef][:ids],@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs, status: :ok
-    end
+    render json: @chefs, status: :ok
   end
 
   def chefs_with_dishes
     @chefs = Chef.chefs_with_dishes(@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    render json: @chefs,status: :ok
   end
 
   def chefs_with_followers
-    @chefs = Chef.chefs_with_dishes(@page, @per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    @chefs = Chef.chefs_with_followers(@page, @per_page)
+    render json: @chefs,status: :ok
   end
 
   def chefs_with_orders
     @chefs = Chef.chefs_with_orders(@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs, status: :ok
-    end
+    render json: @chefs, status: :ok
   end
 
   def chefs_with_orders_today
     @chefs = Chef.chefs_with_orders_today(@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    render json: @chefs,status: :ok
+  end
+
+  def orders_today
+    @chef = Chef.orders_today(params[:id])
+    render json: @chefs,status: :ok
   end
 
   def chefs_with_orders_yesterday
     @chefs = Chef.chefs_with_orders_yesterday(@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    render json: @chefs,status: :ok
+  end
+
+  def orders_yesterday
+    @chefs = Chef.orders_yesterday(params[:id])
+    render json: @chefs, status: :ok
   end
 
   def chefs_with_orders_week
     @chefs = Chef.chefs_with_orders_week(@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    render json: @chefs,status: :ok
+  end
+
+  def orders_week
+    @chefs = Chef.orders_week(params[:id])
+    render json: @chefs,status: :ok
   end
 
   def chefs_with_orders_month
-    @chefs = Chef.chefs_with_orders_month(params[:chef][:year],params[:chef][:month],@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    @chefs = Chef.chefs_with_orders_month(params[:chef][:year].to_i,params[:chef][:month].to_i,@page,@per_page)
+    render json: @chefs,status: :ok
+  end
+
+  def orders_month
+    @chefs = Chef.orders_month(params[:id],params[:chef][:year].to_i,params[:chef][:month].to_i)
+    render json: @chefs, status: :ok
   end
 
   def chefs_with_orders_year
-    @chefs = Chef.chefs_with_orders_year(params[:chef][:year],@page,@per_page)
-    if stale?(@chefs,public: true)
-      render json: @chefs,status: :ok
-    end
+    @chefs = Chef.chefs_with_orders_year(params[:chef][:year].to_i,@page,@per_page)
+    render json: @chefs,status: :ok
+  end
+
+  def orders_year
+    @chefs = Chef.orders_year(params[:id],params[:chef][:year].to_i)
+    render json: @chefs, status: :ok
   end
 
   def best_seller_chefs_per_month
-    chef_params_date
-    @chefs = Chef.best_seller_chefs_per_month(params[:chef][:year],params[:chef][:month])
-    if stale?(@chefs,public: true)
-      render json: @chefs, status: :ok
-    end
+    @chefs = Chef.best_seller_chefs_per_month(params[:chef][:year].to_i,params[:chef][:month].to_i)
+    render json: @chefs, status: :ok
   end
 
   def best_seller_chefs_per_year
-    chef_params_year
-    @chefs = Chef.best_seller_chefs_per_year(params[:chef][:year])
-    if stale?(@chefs,public: true)
-      render json: @chefs, status: :ok
-    end
+    @chefs = Chef.best_seller_chefs_per_year(params[:chef][:year].to_i)
+    render json: @chefs, status: :ok
   end
 
   def follow
     if @chef
-      follower = Follower.new(user_id: current_user.id,chef_id: @chef.id)
-      if follower.save
+      if Follower.follow(current_user.id,@chef.id)
         record_success
       else
         record_error
@@ -140,9 +134,8 @@ class Api::V1::ChefsController < ApplicationController
 
   def unfollow
     if @chef
-      follower = Follower.where(user_id: current_user.id).where(chef_id: @chef.id)
+      follower = Follower.unfollow(current_user.id,@chef.id)
       if follower
-        follower.destroy
         if follower.destroyed?
           record_success
         else
@@ -157,7 +150,6 @@ class Api::V1::ChefsController < ApplicationController
   end
 
   private
-
     def set_pagination
       if params.has_key?(:page)
         @page = params[:page][:number].to_i
@@ -171,15 +163,4 @@ class Api::V1::ChefsController < ApplicationController
       @chef = Chef.chef_by_id(params[:id])
     end
 
-    def chef_params_ids
-      params.require(:chef).permit(:ids => [])
-    end
-
-    def chef_params_date
-      params.require(:chef).permit(:year,:month)
-    end
-
-    def chef_params_year
-      params.require(:chef).permit(:year)
-    end
 end
