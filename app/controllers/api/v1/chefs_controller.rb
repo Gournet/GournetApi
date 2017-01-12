@@ -6,16 +6,17 @@ class Api::V1::ChefsController < ApplicationController
   before_action :set_chef, only: [:show,:destroy,:follow,:unfollow]
   before_action :authenticate_admin!, only: [:destroy]
   before_action :authenticate_user!, only: [:follow,:unfollow]
+  before_action :set_include
 
   def index
     @chefs = Chef.load_chefs(@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def show
     if @chef
       if stale?(@chef,public: true)
-        render json: @chef,status: :ok
+        render json: @chef,status: :ok, include: @include, root: "data"
       end
     else
       record_not_found
@@ -37,87 +38,87 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_by_ids
     @chefs = Chef.chefs_by_ids(params[:chef][:ids],@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def chefs_by_not_ids
     @chefs = Chef.chefs_by_not_ids(params[:chef][:ids],@page,@per_page)
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, include: @include, root: "data"
   end
 
   def chefs_with_dishes
     @chefs = Chef.chefs_with_dishes(@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, root: "data"
   end
 
   def chefs_with_followers
     @chefs = Chef.chefs_with_followers(@page, @per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, root: "data"
   end
 
   def chefs_with_orders
     @chefs = Chef.chefs_with_orders(@page,@per_page)
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, root: "data"
   end
 
   def chefs_with_orders_today
     @chefs = Chef.chefs_with_orders_today(@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def orders_today
     @chef = Chef.orders_today(params[:id])
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def chefs_with_orders_yesterday
     @chefs = Chef.chefs_with_orders_yesterday(@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def orders_yesterday
     @chefs = Chef.orders_yesterday(params[:id])
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, include: @include, root: "data"
   end
 
   def chefs_with_orders_week
     @chefs = Chef.chefs_with_orders_week(@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def orders_week
     @chefs = Chef.orders_week(params[:id])
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def chefs_with_orders_month
     @chefs = Chef.chefs_with_orders_month(params[:chef][:year].to_i,params[:chef][:month].to_i,@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def orders_month
     @chefs = Chef.orders_month(params[:id],params[:chef][:year].to_i,params[:chef][:month].to_i)
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, include: @include, root: "data"
   end
 
   def chefs_with_orders_year
     @chefs = Chef.chefs_with_orders_year(params[:chef][:year].to_i,@page,@per_page)
-    render json: @chefs,status: :ok
+    render json: @chefs,status: :ok, include: @include, root: "data"
   end
 
   def orders_year
     @chefs = Chef.orders_year(params[:id],params[:chef][:year].to_i)
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, include: @include, root: "data"
   end
 
   def best_seller_chefs_per_month
     @chefs = Chef.best_seller_chefs_per_month(params[:chef][:year].to_i,params[:chef][:month].to_i)
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, root: "data"
   end
 
   def best_seller_chefs_per_year
     @chefs = Chef.best_seller_chefs_per_year(params[:chef][:year].to_i)
-    render json: @chefs, status: :ok
+    render json: @chefs, status: :ok, root: "data"
   end
 
   def follow
@@ -162,5 +163,15 @@ class Api::V1::ChefsController < ApplicationController
     def set_chef
       @chef = Chef.chef_by_id(params[:id])
     end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
+    end
+
 
 end

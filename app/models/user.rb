@@ -148,9 +148,11 @@ class User < ActiveRecord::Base
   has_many :favorite_dishes, dependent: :destroy
   has_many :dishes, -> {reorder('dishes.name ASC')}, through: :favorite_dishes
   has_many :rating_dishes, dependent: :nullify
-  has_many :r_dishes, through: :rating_dish, source: :dish
+  has_many :r_dishes, through: :rating_dishes, source: :dish
+  has_many :comments, dependent: :destroy
+  has_many :c_dishes, through: :comments, source: :dish
   has_many :comment_votes, dependent: :nullify
-  has_many :comments, ->{reorder('comments.created_at DESC')}, through: :comment_votes
+  has_many :v_comments, ->{reorder('comments.created_at DESC')}, through: :comment_votes, source: :comment
 
 
   validates :name, :lastname, presence: true

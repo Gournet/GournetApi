@@ -3,16 +3,17 @@ class Api::V1::AlergiesController < ApplicationController
   before_action :authenticate_admin!, only: [:create,:update,:destroy]
   before_action :set_alergy, only: [:show,:update,:destroy]
   before_action :set_pagination, only: [:index,:alergies_by_ids, :alergies_by_not_ids,:alergies_with_users,:alergies_with_dishes,:alergies_with_dishes_and_users,:alergies_by_search]
+  before_action :set_include
 
   def index
     @alergies = Alergy.load_alergies(@page,@per_page)
-    render json: @alergies,status: :ok
+    render json: @alergies,status: :ok, include: @include, root: "data"
   end
 
   def show
     if @alergy
       if stale?(@alergy, public: true)
-        render @alergy, status: :ok
+        render json: @alergy, status: :ok, include: @include, root: "data"
       end
     else
       record_not_found
@@ -22,7 +23,7 @@ class Api::V1::AlergiesController < ApplicationController
   def create
     @alergy = Alergy.new(alergy_params)
     if @alergy.save
-      render json: @alergy, status: :created, :location => api_v1_alergy_path(@alergy)
+      render json: @alergy, status: :created, :location => api_v1_alergy_path(@alergy), root: "data"
     else
       record_errors(@alergy)
     end
@@ -31,7 +32,7 @@ class Api::V1::AlergiesController < ApplicationController
   def update
     if @alergy
       if @alergy.update(alergy_params)
-        render json: @alergy, status: :ok
+        render json: @alergy, status: :ok, root: "data"
       else
         record_errors(@alergy)
       end
@@ -56,36 +57,36 @@ class Api::V1::AlergiesController < ApplicationController
   def alergies_by_ids
     @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
     if stale?(@alergies,public: true)
-      render json: @alergies, status: :ok
+      render json: @alergies, status: :ok, include: @include, root: "data"
     end
   end
 
   def alergies_by_not_ids
     @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
     if stale?(@alergies,public: true)
-      render json: @alergies,status: :ok
+      render json: @alergies,status: :ok, include: @include, root: "data"
     end
   end
 
   def alergies_with_users
     @alergies = Alergy.alergies_with_users(@page,@per_page)
-    render json: @alergies, status: :ok
+    render json: @alergies, status: :ok, root: "data"
 
   end
 
   def alergies_with_dishes
     @alergies = Alergy.alergies_with_dishes(@page,@per_page)
-    render json: @alergies, status: :ok
+    render json: @alergies, status: :ok, root: "data"
   end
 
   def alergies_with_dishes_and_users
     @alergies = Alergy.alergies_with_dishes_and_users(@page,@per_page)
-    render json: @alergies,status: :ok
+    render json: @alergies,status: :ok, root: "data"
   end
 
   def alergies_by_search
     @alergies = Alergy.search_name(params[:alergy][:name],@page,@per_page)
-    render json: @alergies, status: :ok
+    render json: @alergies, status: :ok, include: @include, root: "data"
   end
 
   private
@@ -106,5 +107,15 @@ class Api::V1::AlergiesController < ApplicationController
     def alergy_params
       params.require(:alergy).permit(:name,:description)
     end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
+    end
+
 
 end

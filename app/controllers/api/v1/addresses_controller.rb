@@ -5,6 +5,7 @@ class Api::V1::AddressesController < ApplicationController
   before_action :authenticate_member!, only: [:destroy]
   before_action :set_pagination, only: [:index,:popular_addresses,:find_adddress_by_lat_and_lng,:addresses_with_orders]
   before_action :set_address, only: [:show,:update,:destroy]
+  before_actino :set_include
 
   def index
     @addresses = nil
@@ -13,13 +14,13 @@ class Api::V1::AddressesController < ApplicationController
     else
       @addresses = Address.load_addresses(@page,@per_page)
     end
-    render json: @addresses, status: :ok
+    render json: @addresses, status: :ok, include: @include, root: "data"
   end
 
   def show
     if @address
       if stale?(@address,public: true)
-        render json: @address, status: :ok
+        render json: @address, status: :ok, include: @include, root: "data"
       end
     else
       record_not_found
@@ -30,7 +31,7 @@ class Api::V1::AddressesController < ApplicationController
     @address = Address.new(address_params)
     @address.user_id = current_user.id
     if @address.save
-      render json: @address, status: :created, :location => api_v1_address_path(@address)
+      render json: @address, status: :created, :location => api_v1_address_path(@address), root: "data"
     else
       record_errors(@address)
     end
@@ -40,7 +41,7 @@ class Api::V1::AddressesController < ApplicationController
     if @address
       if @address.user_id == current_user.id
         if @address.update(address_params)
-          render json: @address, status: :ok
+          render json: @address, status: :ok, root: "data"
         else
           record_errors(@address)
         end
@@ -71,17 +72,17 @@ class Api::V1::AddressesController < ApplicationController
 
   def popular_addresses
     @addresses = Address.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page)
-    render json: @addresses, status: :ok
+    render json: @addresses, status: :ok, include: @include, root: "data"
   end
 
   def find_adddress_by_lat_and_lng
     @addresses = Address.address_by_lat_and_lng(params[:address][:lat].to_f,params[:address][:lng].to_f,@page,@per_page)
-    render json: @addresses, status: :ok
+    render json: @addresses, status: :ok, include: @include, root: "data"
   end
 
   def addresses_with_orders
     @addresses =  Address.addresses_with_orders(@page,@per_page)
-    render json: @addresses, status: :ok
+    render json: @addresses, status: :ok, root: "data"
   end
 
   private
@@ -100,6 +101,15 @@ class Api::V1::AddressesController < ApplicationController
 
     def address_params
       params.require(:address).permit(:address,:lat,:lng)
+    end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
     end
 
 end

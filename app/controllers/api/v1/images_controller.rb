@@ -5,6 +5,7 @@ class Api::V1::ImagesController < ApplicationController
   before_action :authenticate_member!, only: [:destroy]
   before_action :set_image, only: [:show,:update,:destroy]
   before_action :set_pagination, only: [:index]
+  before_action :set_include
 
   def index
     @images = nil
@@ -13,14 +14,14 @@ class Api::V1::ImagesController < ApplicationController
     else
       @images = Image.load_images(@page,@per_page)
     end
-    render json: @images, status: :ok
+    render json: @images, status: :ok, include: @include,root: "data"
 
   end
 
   def show
     if @image
       if stale?(@image,public: true)
-        render json: @image,status: :ok
+        render json: @image,status: :ok, include: @include,root: "data"
       end
     else
       record_not_found
@@ -31,7 +32,7 @@ class Api::V1::ImagesController < ApplicationController
     @image = Image.new(image_params)
     @image.dish_id = params[:dish_id]
     if @image.save
-      render json: @image, status: :created, :location => api_v1_image_path(@image)
+      render json: @image, status: :created, :location => api_v1_image_path(@image),root: "data"
     else
       record_errors(@image)
     end
@@ -42,7 +43,7 @@ class Api::V1::ImagesController < ApplicationController
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
       if chef == current_chef.id
         if @image.update(image_params)
-          render json: @image, status: :ok
+          render json: @image, status: :ok,root: "data"
         else
           record_errors(@image)
         end
@@ -88,6 +89,15 @@ class Api::V1::ImagesController < ApplicationController
 
     def set_image
       @image =  Image.image_by_id(params[:id])
+    end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
     end
 
 end

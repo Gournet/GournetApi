@@ -4,6 +4,7 @@ class Api::V1::OrdersController < ApplicationController
   before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,:orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year,:orders_today_resource,:orders_yesterday_resource,:orders_week_resource,:orders_month_resource,:orders_year_resource]
   before_action :set_order, only: [:show]
   before_action :authenticate_user!, only: [:create]
+  before_action :set_include
 
   def index
     @orders = nil
@@ -18,13 +19,13 @@ class Api::V1::OrdersController < ApplicationController
     else
       @orders = Order.load_orders(@page,@per_page)
     end
-    render json: @orders,status: :ok
+    render json: @orders,status: :ok, include: @include,root: "data"
   end
 
   def show
     if @order
       if stale?(@order,public: true)
-        render json: @order, status: :ok
+        render json: @order, status: :ok, include: @include,root: "data"
       end
     else
       record_not_found
@@ -54,7 +55,7 @@ class Api::V1::OrdersController < ApplicationController
           available.count = available.count - @order.count
           available.save
           if @order.save
-            render json: @order,status: :created, :location => api_v1_order_path(@order)
+            render json: @order,status: :created, :location => api_v1_order_path(@order),root: "data"
           else
             record_errors(@order)
           end
@@ -84,17 +85,17 @@ class Api::V1::OrdersController < ApplicationController
 
   def orders_by_ids
     @orders = Order.orders_by_ids(params[:order][:ids],@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_by_not_ids
     @orders = Order.orders_by_not_ids(params[:order][:ids],@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_today
     @orders = Order.orders_today(@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_today_resource
@@ -106,12 +107,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_today_dish(params[:dish_id],@page,@per_page)
     end
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_yesterday
     @orders = Order.orders_today(@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_yesterday_resource
@@ -123,12 +124,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_yesterday_dish(params[:dish_id],@page,@per_page)
     end
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_week
     @orders = Order.orders_week(@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_week_resource
@@ -140,12 +141,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_week_dish(params[:dish_id],@page,@per_page)
     end
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_month
     @orders = Order.orders_month(params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_month_resource
@@ -157,12 +158,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_month_dish(params[:dish_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
     end
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_year
     @orders = Order.orders_year(params[:order][:year].to_i,@page,@per_page)
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   def orders_year_resource
@@ -174,7 +175,7 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_year_dish(params[:dish_id],params[:order][:year].to_i,@page,@per_page)
     end
-    render json: @orders, status: :ok
+    render json: @orders, status: :ok, include: @include,root: "data"
   end
 
   private
@@ -194,6 +195,15 @@ class Api::V1::OrdersController < ApplicationController
     def order_params
       params.require(:order).permit(:count,:price,:comment,:day,:estimated_time,:payment_type)
       params.require(:relationship).permit(:address_id,:chef_id,:dish_id)
+    end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
     end
 
 end

@@ -7,14 +7,14 @@ class Api::V1::AdminsController < ApplicationController
   def index
     @admins = Admin.load_admins(@page,@per_page)
     if stale?(@admins)
-      render json: @admins, status: :ok
+      render json: @admins, status: :ok, root: "data"
     end
   end
 
   def show
     if @admin
       if stale?(@admin,public: true)
-        render json: @admin, status: :ok
+        render json: @admin, status: :ok, root: "data"
       end
     else
       record_not_found
@@ -40,32 +40,32 @@ class Api::V1::AdminsController < ApplicationController
 
   def admins_by_ids
     @admins =  Admin.admins_by_ids(params[:admin][:ids],@page,@per_page)
-    render json: @admins, status: :ok
+    render json: @admins, status: :ok, root: "data"
   end
 
   def admins_by_not_ids
     @admins =  Admin.admins_by_not_ids(params[:admin][:ids],@page,@per_page)
-    render json: @admins, status: :ok
+    render json: @admins, status: :ok, root: "data"
   end
 
   def admin_by_username
     @admin = Admin.admin_by_username(params[:admin][:username])
     if stale?(@admin,public: true)
-      render json: @admin, status: :ok
+      render json: @admin, status: :ok, root: "data"
     end
   end
 
   def admin_by_email
     @admin =  Admin.admin_by_email(params[:admin][:email])
     if stale?(@admin,public:true)
-      render json: @admin, status: :ok
+      render json: @admin, status: :ok, root: "data"
     end
   end
 
   def admins_by_search
     @admins =  Admin.search(params[:admin][:text],@page,@per_page)
     if stale?(@admins,public: true)
-      render json: @admins,status: :ok
+      render json: @admins,status: :ok, root: "data"
     end
   end
 

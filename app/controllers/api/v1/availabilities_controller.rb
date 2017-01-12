@@ -3,6 +3,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
   before_action :authenticate_chef!, only: [:create,:update,:destroy]
   before_action :set_availability, only: [:update,:destroy]
   before_action :set_pagination, only: [:index,:today,:tomorrow,:next_seven_days,:tomorrow_with_count,:today_with_count,:availabilities_by_dish]
+  before_action :set_include
 
   def index
     @availabilities = nil
@@ -11,13 +12,13 @@ class Api::V1::AvailabilitiesController < ApplicationController
     else
       @availabilities = Availability.load_availabilities(@page,@per_page)
     end
-    render json: @availabilities, status: :ok
+    render json: @availabilities, status: :ok, include: @include, root: "data"
   end
 
   def show
     if @availability
       if stale?(@availability,public: true)
-        render json: @availability,status: :ok
+        render json: @availability,status: :ok, include: @include, root: "data"
       end
     else
       record_not_found
@@ -28,7 +29,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
     @availability = Availability.new(availability_params)
     @availability.dish_id = params[:dish_id]
     if @availability.save()
-      render json: @availability, status: :created, :location => api_v1_availability_path(@availability)
+      render json: @availability, status: :created, :location => api_v1_availability_path(@availability), root: "data"
     else
       record_errors(@availabilty)
     end
@@ -39,7 +40,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
       if chef == current_chef.id
         if @availability.update(availability_params)
-          render json: @availability, status: :ok
+          render json: @availability, status: :ok, root: "data"
         else
           record_errors(@availability)
         end
@@ -73,27 +74,27 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
   def today
     @availabilities = Availability.today.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities,status: :ok
+    render json: @availabilities,status: :ok, include: @include, root: "data"
   end
 
   def tomorrow
     @availabilities = Availability.tomorrow.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities, status: :ok
+    render json: @availabilities, status: :ok, include: @include, root: "data"
   end
 
   def next_seven_days
     @availabilites = Availability.next_seven_days(@page,@per_page)
-    render json: @availabilites,status: :ok
+    render json: @availabilites,status: :ok, include: @include, root: "data"
   end
 
   def today_with_count
     @availabilities = Availability.today.available_count.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities,status: :ok
+    render json: @availabilities,status: :ok, include: @include, root: "data"
   end
 
   def tomorrow_with_count
     @availabilities = Availability.tomorrow.available_count.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities,status: :ok
+    render json: @availabilities,status: :ok, include: @include, root: "data"
   end
 
   private
@@ -113,5 +114,15 @@ class Api::V1::AvailabilitiesController < ApplicationController
     def availability_params
       params.require(:availability).permit(:day,:count,:available,:end_time,:repeat)
     end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
+    end
+
 
 end
