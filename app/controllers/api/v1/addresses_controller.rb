@@ -5,7 +5,7 @@ class Api::V1::AddressesController < ApplicationController
   before_action :authenticate_member!, only: [:destroy]
   before_action :set_pagination, only: [:index,:popular_addresses,:find_adddress_by_lat_and_lng,:addresses_with_orders]
   before_action :set_address, only: [:show,:update,:destroy]
-  before_actino :set_include
+  before_action :set_include
 
   def index
     @addresses = nil
@@ -14,7 +14,7 @@ class Api::V1::AddressesController < ApplicationController
     else
       @addresses = Address.load_addresses(@page,@per_page)
     end
-    render json: @addresses, status: :ok, include: @include, root: "data"
+    render json: @addresses, status: :ok, include: @include, root: "data", meta: meta_attributes(@addresses)
   end
 
   def show
@@ -72,17 +72,17 @@ class Api::V1::AddressesController < ApplicationController
 
   def popular_addresses
     @addresses = Address.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page)
-    render json: @addresses, status: :ok, include: @include, root: "data"
+    render json: @addresses, status: :ok, include: @include, root: "data",meta: meta_attributes(@addresses)
   end
 
   def find_adddress_by_lat_and_lng
     @addresses = Address.address_by_lat_and_lng(params[:address][:lat].to_f,params[:address][:lng].to_f,@page,@per_page)
-    render json: @addresses, status: :ok, include: @include, root: "data"
+    render json: @addresses, status: :ok, include: @include, root: "data",meta: meta_attributes(@addresses)
   end
 
   def addresses_with_orders
     @addresses =  Address.addresses_with_orders(@page,@per_page)
-    render json: @addresses, status: :ok, root: "data"
+    render json: @addresses, status: :ok, root: "data",meta: meta_attributes(@addresses)
   end
 
   private

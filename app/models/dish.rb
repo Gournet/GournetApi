@@ -8,7 +8,7 @@ class Dish < ApplicationRecord
   scope :order_by_rating, -> {reorder('dishes.rating DESC')}
 
   def self.popular_dishes_by_rating(rating = 2,page = 1, per_page = 10)
-    includes(:images,:chef,:categories,:alergies,:users,:comments,:availabilities,orders: [:user])
+    includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
     .where(rating: rating)
     .paginate(:page => page, :per_page => per_page)
     .reorder("dishes.rating DESC")
@@ -103,29 +103,29 @@ class Dish < ApplicationRecord
   end
 
   def self.dish_by_id(id)
-    includes(:images,:chef,:categories,:comments,:alergies,:users,orders:[:user])
+    includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
     .find_by_id(id)
   end
 
   def self.dishes_by_ids(ids,page = 1,per_page = 10)
-    includes(:images,:chef,:categories,:comments,:alergies,:users,orders: [:user])
+    includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
     .where(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.dishes_by_not_ids(ids,page = 1,per_page = 10)
-    includes(:images,:chef,:categories,:comments,:alergies,:users,orders: [:user])
+    includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
     .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.load_dishes(page = 1, per_page = 10)
-    includes(:images,:chef,:categories,:comments,:alergies,:users,orders: [:user])
+    includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.dish_by_chef(chef,page = 1,per_page = 10)
-    includes(:images,:chef,:categories,:comments,:alergies,:users,orders: [:user])
+    includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
       .where(dishes: {chef_id: chef})
       .paginate(:page => page, :per_page => per_page)
   end
@@ -162,7 +162,7 @@ class Dish < ApplicationRecord
     end
 
     def self.query_orders(date,page,per_page)
-      includes(orders: [:user])
+      includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
         .where(orders: { day: date})
         .group("dishes.id")
         .paginate(:page => page, :per_page => per_page)
@@ -171,7 +171,7 @@ class Dish < ApplicationRecord
     end
 
     def self.query_orders_dish(dish,date)
-      includes(orders: [:user])
+      includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
         .where(orders: { day: date })
         .where(dishes: { id: dish })
         .reorder("orders.day")

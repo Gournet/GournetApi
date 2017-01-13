@@ -10,7 +10,7 @@ class Api::V1::ChefsController < ApplicationController
 
   def index
     @chefs = Chef.load_chefs(@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def show
@@ -38,32 +38,32 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_by_ids
     @chefs = Chef.chefs_by_ids(params[:chef][:ids],@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def chefs_by_not_ids
     @chefs = Chef.chefs_by_not_ids(params[:chef][:ids],@page,@per_page)
-    render json: @chefs, status: :ok, include: @include, root: "data"
+    render json: @chefs, status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def chefs_with_dishes
     @chefs = Chef.chefs_with_dishes(@page,@per_page)
-    render json: @chefs,status: :ok, root: "data"
+    render json: @chefs,status: :ok, root: "data",meta: meta_attributes(@chefs)
   end
 
   def chefs_with_followers
     @chefs = Chef.chefs_with_followers(@page, @per_page)
-    render json: @chefs,status: :ok, root: "data"
+    render json: @chefs,status: :ok, root: "data",meta: meta_attributes(@chefs)
   end
 
   def chefs_with_orders
     @chefs = Chef.chefs_with_orders(@page,@per_page)
-    render json: @chefs, status: :ok, root: "data"
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs)
   end
 
   def chefs_with_orders_today
     @chefs = Chef.chefs_with_orders_today(@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_today
@@ -73,7 +73,7 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_with_orders_yesterday
     @chefs = Chef.chefs_with_orders_yesterday(@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_yesterday
@@ -83,7 +83,7 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_with_orders_week
     @chefs = Chef.chefs_with_orders_week(@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_week
@@ -93,7 +93,7 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_with_orders_month
     @chefs = Chef.chefs_with_orders_month(params[:chef][:year].to_i,params[:chef][:month].to_i,@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_month
@@ -103,7 +103,7 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_with_orders_year
     @chefs = Chef.chefs_with_orders_year(params[:chef][:year].to_i,@page,@per_page)
-    render json: @chefs,status: :ok, include: @include, root: "data"
+    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_year

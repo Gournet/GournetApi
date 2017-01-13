@@ -17,7 +17,7 @@ class Api::V1::DishesController < ApplicationController
     else
       @dishes =  Dish.load_dishes(@page,@per_page)
     end
-    render json: @dishes,status: :ok, include: @include,root: "data"
+    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
 
   end
 
@@ -76,72 +76,72 @@ class Api::V1::DishesController < ApplicationController
 
   def dishes_by_ids
     @dishes = Dish.dishes_by_ids(params[:dish][:ids],@page, @per_page)
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_not_ids
     @dishes = Dish.dishes_by_not_ids(params[:dish][:ids],@page,@per_page)
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def popular_dishes_by_rating_greater_than
     @dishes = Dish.popular_dishes_by_rating(params[:dish][:rating].to_i,@page,@per_page)
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_price
     @dishes = Dish.includes(:images,:chef,:categories,:alergies,:users,:comments,:availabilities,orders: [:user]).all.paginate(:page => @page,:per_page =>@per_page).order_by_price
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_calories
     @dishes = Dish.includes(:images,:chef,:categories,:alergies,:users,:comments,:availabilities,orders: [:user]).all.paginate(:page => @page,:per_page => @per_page).order_by_calories
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_cooking_time
     @dishes = Dish.includes(:images,:chef,:categories,:alergies,:users,:comments,:availabilities,orders: [:user]).all.paginate(:page => @page, :per_page =>@per_page).order_by_cooking_time
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_rating
     @dishes = Dish.includes(:images,:chef,:categories,:alergies,:users,:comments,:availabilities,orders: [:user]).all.paginate(:page => @page,:per_page => @per_page).order_by_rating
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_rating
     @dishes = Dish.dishes_with_rating(@page,@per_page)
-    render json: @dishes, status: :ok,root: "data"
+    render json: @dishes, status: :ok,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_comments
     @dishes = Dish.dishes_with_comments(@page,@per_page)
-    render json: @dishes, status: :ok,root: "data"
+    render json: @dishes, status: :ok,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_rating_and_comments
     @dishes = Dish.dihses_with_rating_and_comments(@page,@per_page)
-    render json: @dishes, status: :ok,root: "data"
+    render json: @dishes, status: :ok,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_orders
     @dishes = Dish.dishes_with_orders(@page,@per_page)
-    render json: @dishes,status: :ok,root: "data"
+    render json: @dishes,status: :ok,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_orders_today
     @dishes = Dish.dishes_by_orders_today(@page,@per_page)
-    render json: @dishes,status: :ok, include: @include,root: "data"
+    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_today
     @dishes = Dish.orders_today(params[:id])
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_orders_yesterday
     @dishes = Dish.dishes_by_orders_yesterday(@page,@per_page)
-    render json: @dishes,status: :ok, include: @include,root: "data"
+    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_yesterday
@@ -151,7 +151,7 @@ class Api::V1::DishesController < ApplicationController
 
   def dishes_by_orders_week
     @dishes = Dish.dishes_by_orders_week(@page,@per_page)
-    render json: @dishes,status: :ok, include: @include,root: "data"
+    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_week
@@ -161,7 +161,7 @@ class Api::V1::DishesController < ApplicationController
 
   def dishes_by_orders_month
     @dishes = Dish.dishes_by_orders_month(params[:dish][:year].to_i,params[:dish][:month].to_i,@page,@per_page)
-    render json: @dishes,status: :ok, include: @include,root: "data"
+    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_month
@@ -171,7 +171,7 @@ class Api::V1::DishesController < ApplicationController
 
   def dishes_by_orders_year
     @dishes = Dish.dishes_by_orders_year(params[:dish][:year].to_i,@page,@per_page)
-    render json: @dishes, status: :ok, include: @include,root: "data"
+    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_year

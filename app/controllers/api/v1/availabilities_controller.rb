@@ -12,7 +12,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
     else
       @availabilities = Availability.load_availabilities(@page,@per_page)
     end
-    render json: @availabilities, status: :ok, include: @include, root: "data"
+    render json: @availabilities, status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def show
@@ -74,27 +74,27 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
   def today
     @availabilities = Availability.today.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities,status: :ok, include: @include, root: "data"
+    render json: @availabilities,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def tomorrow
     @availabilities = Availability.tomorrow.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities, status: :ok, include: @include, root: "data"
+    render json: @availabilities, status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def next_seven_days
     @availabilites = Availability.next_seven_days(@page,@per_page)
-    render json: @availabilites,status: :ok, include: @include, root: "data"
+    render json: @availabilites,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def today_with_count
     @availabilities = Availability.today.available_count.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities,status: :ok, include: @include, root: "data"
+    render json: @availabilities,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def tomorrow_with_count
     @availabilities = Availability.tomorrow.available_count.paginate(:page => @page,:per_page => @per_page)
-    render json: @availabilities,status: :ok, include: @include, root: "data"
+    render json: @availabilities,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   private

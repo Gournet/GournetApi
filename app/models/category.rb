@@ -4,25 +4,25 @@ class Category < ApplicationRecord
 
 
   def self.search_name(name,page = 1,per_page = 10)
-    includes(:dishes).where("name LIKE ?","#{name.downcase}%")
+    includes(dishes: [:orders]).where("name LIKE ?","#{name.downcase}%")
       .paginate(:page => page, :per_page => per_page)
   end
 
   def self.category_by_id(id)
-    includes(:dishes).find_by_id(id)
+    includes(dishes: [:orders]).find_by_id(id)
   end
 
   def self.categories_by_ids(ids,page,per_page)
-    includes(:dishes).where(id: ids)
+    includes(dishes: [:orders]).where(id: ids)
       .paginate(:page => page, :per_page => per_page)
   end
   def self.categories_by_not_ids(ids,page,per_page)
-    includes(:dishes).where.not(id: ids)
+    includes(dishes: [:orders]).where.not(id: ids)
       .paginate(:page => page, :per_page => per_page)
   end
 
   def self.load_categories(page = 1,per_page = 10)
-    includes(:dishes)
+    includes(dishes: [:orders])
       .paginate(:page => page,:per_page => per_page)
   end
 

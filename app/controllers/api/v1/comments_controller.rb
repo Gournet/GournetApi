@@ -16,7 +16,7 @@ class Api::V1::CommentsController < ApplicationController
     else
       @comments = Comment.load_comments(@page,@per_page)
     end
-    render json: @comments,status: :ok, include: @include,root: "data"
+    render json: @comments,status: :ok, include: @include,root: "data",meta: meta_attributes(@comments)
   end
 
   def show
@@ -75,7 +75,7 @@ class Api::V1::CommentsController < ApplicationController
 
   def comments_with_votes_by_dish
     @comments = Comment.comments_with_votes_by_dish(params[:dish_id],@page,@per_page)
-    render json: @comments, status: :ok,root: "data"
+    render json: @comments, status: :ok,root: "data",meta: meta_attributes(@comments)
   end
 
   def add_vote

@@ -14,7 +14,7 @@ class Api::V1::ImagesController < ApplicationController
     else
       @images = Image.load_images(@page,@per_page)
     end
-    render json: @images, status: :ok, include: @include,root: "data"
+    render json: @images, status: :ok, include: @include,root: "data",meta: meta_attributes(@images)
 
   end
 

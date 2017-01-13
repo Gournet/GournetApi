@@ -142,6 +142,18 @@ Rails.application.routes.draw do
           end
         end
         resources :images
+        resources :alergies, only: [:create] do
+          collection do
+            post 'addAlergiesDish', to: "alergies#add_alergies_dish"
+            delete 'removeAlergiesDish', to: "alergies#remove_alergies_dish"
+          end
+        end
+        resources :categories, only: [:create] do
+          collection do
+            post 'addCategoriesDish', to: "categories#add_categories_dish"
+            delete 'removeCategoriesDish', to: "categories#remove_categories_dish"      
+          end
+        end
       end
 
       scope "/administrator" do
@@ -153,6 +165,8 @@ Rails.application.routes.draw do
             get 'alergiesWithDishes', to: "alergies#alergies_with_dishes"
             get 'alergiesWithDishesAndUsers', to: "alergies#alergies_with_dishes_and_users"
             get 'alergiesBySearch', to: "alergies#alergies_by_search"
+            post 'addAlergiesUser', to: "alergies#add_alergies"
+            delete 'removeAlergiesUser', to: "alergies#remove_alergies"
           end
         end
         resources :categories do

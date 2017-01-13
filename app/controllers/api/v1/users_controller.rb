@@ -7,9 +7,7 @@ class Api::V1::UsersController < ApplicationController
 
   def index
     @users =  User.load_users(@page,@per_page)
-    if stale?(@users,public: true)
-      render json: @users, status: :ok, include: @include,root: "data"
-    end
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def show
@@ -41,22 +39,22 @@ class Api::V1::UsersController < ApplicationController
 
   def search
     @users = User.search(params[:user][:text],@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def users_by_ids
     @users = User.users_by_ids(params[:user][:ids],@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def users_by_not_ids
     @users = User.users_by_not_ids(params[:user][:ids],@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_today
     @users = User.orders_today(@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_today_user
@@ -66,7 +64,7 @@ class Api::V1::UsersController < ApplicationController
 
   def orders_yesterday
     @users = User.orders_yesterday(@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_yesterday_user
@@ -76,7 +74,7 @@ class Api::V1::UsersController < ApplicationController
 
   def orders_week
     @users = User.orders_week(@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_week_user
@@ -86,7 +84,7 @@ class Api::V1::UsersController < ApplicationController
 
   def orders_month
     @users = User.orders_month(params[:user][:year].to_i,params[:user][:month].to_i,@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_month_user
@@ -96,7 +94,7 @@ class Api::V1::UsersController < ApplicationController
 
   def orders_year
     @users = User.orders_year(params[:user][:year].to_i,@page,@per_page)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_year_user
@@ -106,28 +104,28 @@ class Api::V1::UsersController < ApplicationController
 
   def users_with_addresses
     @users = User.users_with_addresses(@page,@per_page)
-    render json: @users, status: :ok,root: "data"
+    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
   end
 
   def users_with_alergies
     @users = User.users_with_alergies(@page,@per_page)
-    render json: @users, status: :ok,root: "data"
+    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
 
   end
 
   def users_with_orders
     @users = User.users_with_alergies(@page,@per_page)
-    render json: @users, status: :ok,root: "data"
+    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
   end
 
   def users_with_favorite_dishes
     @users = User.users_with_favorite_dishes(@page,@per_page)
-    render json: @users, status: :ok,root: "data"
+    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
   end
 
   def users_with_rating_dishes
     @users = User.users_with_rating_dishes(@page,@per_page)
-    render json: @users, status: :ok,root: "data"
+    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
   end
 
   def best_seller_users_per_month

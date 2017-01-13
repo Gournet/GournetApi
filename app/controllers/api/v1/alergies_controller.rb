@@ -1,13 +1,15 @@
 class Api::V1::AlergiesController < ApplicationController
   include ControllerUtility
   before_action :authenticate_admin!, only: [:create,:update,:destroy]
+  before_action :authenticate_user!, only: [:add_alergies,:remove_alergies]
+  before_action :authenticate_chef!, only: [:add_alergies_dish,:remove_alergies_dish]
   before_action :set_alergy, only: [:show,:update,:destroy]
   before_action :set_pagination, only: [:index,:alergies_by_ids, :alergies_by_not_ids,:alergies_with_users,:alergies_with_dishes,:alergies_with_dishes_and_users,:alergies_by_search]
   before_action :set_include
 
   def index
     @alergies = Alergy.load_alergies(@page,@per_page)
-    render json: @alergies,status: :ok, include: @include, root: "data"
+    render json: @alergies,status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
   end
 
   def show
@@ -45,9 +47,69 @@ class Api::V1::AlergiesController < ApplicationController
     if @alergy
       @alergy.destroy
       if @alergy.destroyed?
-        record_success
+        record_error
       else
         record_error
+      end
+    else
+      record_not_found
+    end
+  end
+
+  def add_alergies
+    @alergies = Alergy.where(id: params[:alergy][:ids])
+    @user = User.user_by_id(current_user.id)
+    @alergies.each do |a|
+      @user.alergies << a
+    end
+    if @user.save
+      record_success
+    else
+      record_error
+    end
+  end
+
+  def add_alergies_dish
+    @alergies = Alergy.where(id: params[:alergy][:ids])
+    @chef = Chef.chef_by_id(current_chef.id)
+    @dish = Dish.dish_by_id(params[:dish_id])
+    if @dish
+      if @dish.chef.id = @chef.id
+        @alergies.each do |a|
+          @dish.alergies << a
+        end
+        if @dish.save
+          record_success
+        else
+          record_error
+        end
+      else
+        operation_not_allowed
+      end
+    else
+      record_not_found
+    end
+  end
+
+  def remove_alergies
+    @alergiesByUser = AlergyByUser.where(user_id: current_user.id).where(alergy_id: params[:alergy][:ids])
+    @alergiesByUser.each do |a|
+      a.destroy
+    end
+    record_success
+  end
+
+  def remove_alergies_dish
+    @dish = Dish.dish_by_id(params[:dish_id])
+    if @dish
+      if @dish.chef.id == current_chef.id
+        @alergiesByDish = AlergyByDish.where(dish_id: @dish.id).where(alergy_id: params[:alergy][:ids])
+        @alergiesByDish.each do |a|
+          a.destroy
+        end
+        record_success
+      else
+        operation_not_allowed
       end
     else
       record_not_found
@@ -57,36 +119,36 @@ class Api::V1::AlergiesController < ApplicationController
   def alergies_by_ids
     @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
     if stale?(@alergies,public: true)
-      render json: @alergies, status: :ok, include: @include, root: "data"
+      render json: @alergies, status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
     end
   end
 
   def alergies_by_not_ids
     @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
     if stale?(@alergies,public: true)
-      render json: @alergies,status: :ok, include: @include, root: "data"
+      render json: @alergies,status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
     end
   end
 
   def alergies_with_users
     @alergies = Alergy.alergies_with_users(@page,@per_page)
-    render json: @alergies, status: :ok, root: "data"
+    render json: @alergies, status: :ok, root: "data",meta: meta_attributes(@alergies)
 
   end
 
   def alergies_with_dishes
     @alergies = Alergy.alergies_with_dishes(@page,@per_page)
-    render json: @alergies, status: :ok, root: "data"
+    render json: @alergies, status: :ok, root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_with_dishes_and_users
     @alergies = Alergy.alergies_with_dishes_and_users(@page,@per_page)
-    render json: @alergies,status: :ok, root: "data"
+    render json: @alergies,status: :ok, root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_by_search
     @alergies = Alergy.search_name(params[:alergy][:name],@page,@per_page)
-    render json: @alergies, status: :ok, include: @include, root: "data"
+    render json: @alergies, status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
   end
 
   private

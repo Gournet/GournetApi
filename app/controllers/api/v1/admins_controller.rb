@@ -6,9 +6,7 @@ class Api::V1::AdminsController < ApplicationController
 
   def index
     @admins = Admin.load_admins(@page,@per_page)
-    if stale?(@admins)
-      render json: @admins, status: :ok, root: "data"
-    end
+    render json: @admins, status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
   def show
@@ -40,12 +38,12 @@ class Api::V1::AdminsController < ApplicationController
 
   def admins_by_ids
     @admins =  Admin.admins_by_ids(params[:admin][:ids],@page,@per_page)
-    render json: @admins, status: :ok, root: "data"
+    render json: @admins, status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
   def admins_by_not_ids
     @admins =  Admin.admins_by_not_ids(params[:admin][:ids],@page,@per_page)
-    render json: @admins, status: :ok, root: "data"
+    render json: @admins, status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
   def admin_by_username
@@ -64,9 +62,7 @@ class Api::V1::AdminsController < ApplicationController
 
   def admins_by_search
     @admins =  Admin.search(params[:admin][:text],@page,@per_page)
-    if stale?(@admins,public: true)
-      render json: @admins,status: :ok, root: "data"
-    end
+    render json: @admins,status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
   private

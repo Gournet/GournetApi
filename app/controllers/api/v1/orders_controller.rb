@@ -19,7 +19,7 @@ class Api::V1::OrdersController < ApplicationController
     else
       @orders = Order.load_orders(@page,@per_page)
     end
-    render json: @orders,status: :ok, include: @include,root: "data"
+    render json: @orders,status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def show
@@ -85,17 +85,17 @@ class Api::V1::OrdersController < ApplicationController
 
   def orders_by_ids
     @orders = Order.orders_by_ids(params[:order][:ids],@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_by_not_ids
     @orders = Order.orders_by_not_ids(params[:order][:ids],@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_today
     @orders = Order.orders_today(@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_today_resource
@@ -107,12 +107,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_today_dish(params[:dish_id],@page,@per_page)
     end
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_yesterday
     @orders = Order.orders_today(@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_yesterday_resource
@@ -124,12 +124,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_yesterday_dish(params[:dish_id],@page,@per_page)
     end
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_week
     @orders = Order.orders_week(@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_week_resource
@@ -141,12 +141,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_week_dish(params[:dish_id],@page,@per_page)
     end
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_month
     @orders = Order.orders_month(params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_month_resource
@@ -158,12 +158,12 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_month_dish(params[:dish_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
     end
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_year
     @orders = Order.orders_year(params[:order][:year].to_i,@page,@per_page)
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_year_resource
@@ -175,7 +175,7 @@ class Api::V1::OrdersController < ApplicationController
     elsif params.has_key?(:dish_id)
       @orders = Order.orders_year_dish(params[:dish_id],params[:order][:year].to_i,@page,@per_page)
     end
-    render json: @orders, status: :ok, include: @include,root: "data"
+    render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   private

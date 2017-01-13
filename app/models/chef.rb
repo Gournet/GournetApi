@@ -145,7 +145,7 @@ class Chef < ActiveRecord::Base
   protected
 
     def self.query_orders(date,page,per_page)
-      includes(orders: [:dish,:user])
+      includes(:dishes,:users,orders: [:dish,:user,:address])
         .where(orders: {day: date})
         .group("chefs.id")
         .paginate(:page => page, :per_page => per_page)
@@ -154,7 +154,7 @@ class Chef < ActiveRecord::Base
     end
 
     def self.query_orders_chef(chef,date)
-      includes(orders: [:dish,:user])
+      includes(:dishes,:users,orders: [:dish,:user,:address])
         .where(orders: {day: date})
         .where(chefs: {id: chef})
         .reorder("orders.day")

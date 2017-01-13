@@ -63,4 +63,14 @@ module ControllerUtility
   def record_success
     head :no_content
   end
+  def meta_attributes(resource, extra_meta = {})
+    {
+      current_page: resource.current_page,
+      current_size: resource.per_page(nil),
+      next_page: resource.next_page,
+      prev_page: resource.previous_page, # use resource.previous_page when using will_paginate
+      total_pages: resource.total_pages,
+      total_count: resource.total_entries
+    }.merge(extra_meta)
+  end
 end
