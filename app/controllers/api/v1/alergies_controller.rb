@@ -25,7 +25,7 @@ class Api::V1::AlergiesController < ApplicationController
   def create
     @alergy = Alergy.new(alergy_params)
     if @alergy.save
-      render json: @alergy, status: :created, :location => api_v1_alergy_path(@alergy), root: "data"
+      render json: @alergy, status: :created, status_method: "Created", serializer: AttributesAlergySerializer, :location => api_v1_alergy_path(@alergy), root: "data"
     else
       record_errors(@alergy)
     end
@@ -34,7 +34,7 @@ class Api::V1::AlergiesController < ApplicationController
   def update
     if @alergy
       if @alergy.update(alergy_params)
-        render json: @alergy, status: :ok, root: "data"
+        render json: @alergy, status: :ok, status_method: "Updated", serializer: AttributesAlergySerializer , root: "data"
       else
         record_errors(@alergy)
       end
@@ -132,18 +132,18 @@ class Api::V1::AlergiesController < ApplicationController
 
   def alergies_with_users
     @alergies = Alergy.alergies_with_users(@page,@per_page)
-    render json: @alergies, status: :ok, root: "data",meta: meta_attributes(@alergies)
+    render json: @alergies, status: :ok, each_serializer: SimpleAlergySerializer, fields: set_fields, root: "data",meta: meta_attributes(@alergies)
 
   end
 
   def alergies_with_dishes
     @alergies = Alergy.alergies_with_dishes(@page,@per_page)
-    render json: @alergies, status: :ok, root: "data",meta: meta_attributes(@alergies)
+    render json: @alergies, status: :ok, each_serializer: SimpleAlergySerializer, fields: set_fields,  root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_with_dishes_and_users
     @alergies = Alergy.alergies_with_dishes_and_users(@page,@per_page)
-    render json: @alergies,status: :ok, root: "data",meta: meta_attributes(@alergies)
+    render json: @alergies,status: :ok, each_serializer: SimpleAlergySerializer, fields: set_fields, root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_by_search
@@ -170,6 +170,18 @@ class Api::V1::AlergiesController < ApplicationController
       params.require(:alergy).permit(:name,:description)
     end
 
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
+    end
     def set_include
       temp = params[:include]
       temp ||= "*"

@@ -35,7 +35,7 @@ class Api::V1::DishesController < ApplicationController
     @dish =  Dish.new(dish_params)
     @dish.chef_id = current_chef.id
     if @dish.save
-      render json: @dish, status: :created, :location => api_v1_dish_path(@dish),root: "data"
+      render json: @dish, status: :created, status_method: "Created", serializer: AttributesDishSerializer, :location => api_v1_dish_path(@dish),root: "data"
     else
       record_errors(@dish)
     end
@@ -45,7 +45,7 @@ class Api::V1::DishesController < ApplicationController
     if @dish
       if @dish.chef_id == current_chef.id
         if @dish.update(dish_params)
-          render json: @dish,status: :ok,root: "data"
+          render json: @dish,status: :ok, status_method: "Updated", serializer: AttributesDishSerializer, root: "data"
         else
           record_errors(@dish)
         end
@@ -111,22 +111,22 @@ class Api::V1::DishesController < ApplicationController
 
   def dishes_with_rating
     @dishes = Dish.dishes_with_rating(@page,@per_page)
-    render json: @dishes, status: :ok,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields,root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_comments
     @dishes = Dish.dishes_with_comments(@page,@per_page)
-    render json: @dishes, status: :ok,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields, root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_rating_and_comments
     @dishes = Dish.dihses_with_rating_and_comments(@page,@per_page)
-    render json: @dishes, status: :ok,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields, root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_orders
     @dishes = Dish.dishes_with_orders(@page,@per_page)
-    render json: @dishes,status: :ok,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes,status: :ok,each_serializer: SimpleDishSerializer, fields: set_fields, root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_orders_today
@@ -182,12 +182,12 @@ class Api::V1::DishesController < ApplicationController
 
   def best_seller_dishes_per_month
     @dishes = Dish.best_seller_dishes_per_month(params[:dish][:year].to_i,params[:dish][:month].to_i)
-    render json: @dishes,status: :ok,root: "data"
+    render json: @dishes,status: :ok,root: "data",each_serializer: SimpleDishSerializer, fields: set_fields
   end
 
   def best_seller_dishes_per_year
     @dishes = Dish.best_seller_dishes_per_year(params[:dish][:year].to_i)
-    render json: @dishes,status: :ok,root: "data"
+    render json: @dishes,status: :ok,root: "data",each_serializer: SimpleDishSerializer, fields: set_fields
   end
 
   def add_favorite_dish
@@ -265,6 +265,19 @@ class Api::V1::DishesController < ApplicationController
 
     def dish_params
       params.require(:dish).permit(:name,:description,:price,:cooking_time,:calories)
+    end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
     end
 
     def set_include

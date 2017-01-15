@@ -29,7 +29,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
     @availability = Availability.new(availability_params)
     @availability.dish_id = params[:dish_id]
     if @availability.save()
-      render json: @availability, status: :created, :location => api_v1_availability_path(@availability), root: "data"
+      render json: @availability, status: :created, serializer: AttributesAvailabilitySerializer, status_method: "Created",  :location => api_v1_availability_path(@availability), root: "data"
     else
       record_errors(@availabilty)
     end
@@ -40,7 +40,7 @@ class Api::V1::AvailabilitiesController < ApplicationController
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
       if chef == current_chef.id
         if @availability.update(availability_params)
-          render json: @availability, status: :ok, root: "data"
+          render json: @availability, status: :ok, serializer: AttributesAvailabilitySerializer, status_method: "Updated", root: "data"
         else
           record_errors(@availability)
         end

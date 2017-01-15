@@ -82,6 +82,11 @@ Rails.application.routes.draw do
           get 'chefsWithOrdersYear', to: "chefs#chefs_with_orders_year"
           get 'bestSellerChefsMonth', to: "chefs#best_seller_chefs_per_month"
           get 'bestSellerChefsYear', to: "chefs#best_seller_chefs_per_year"
+          get 'professional', to: "chefs#professional"
+          get 'amateur', to: "chefs#amateur"
+          get 'cateringSpecialist',  to: "chefs#catering_specialist"
+          get 'other', to: "chefs#other"
+          get 'cookingStudent', to: "chefs#cooking_student"
         end
         member do
           get 'ordersToday', to: "chefs#orders_today"
@@ -151,7 +156,7 @@ Rails.application.routes.draw do
         resources :categories, only: [:create] do
           collection do
             post 'addCategoriesDish', to: "categories#add_categories_dish"
-            delete 'removeCategoriesDish', to: "categories#remove_categories_dish"      
+            delete 'removeCategoriesDish', to: "categories#remove_categories_dish"
           end
         end
       end
@@ -187,6 +192,8 @@ Rails.application.routes.draw do
           get 'ordersWeek', to: "orders#orders_week"
           get 'ordersMonth', to: "orders#orders_month"
           get 'ordersYear', to: "orders#orders_year"
+          get 'cash', to: "orders#cash"
+          get 'card', to: "orders#card"
         end
       end
       resources :comments, except: [:create] do

@@ -24,7 +24,7 @@ class Api::V1::CategoriesController < ApplicationController
   def create
     @category = Category.new(category_params)
     if @category.save
-      render json: @category,status: :created, :location => api_v1_category_path(@category), root: "data"
+      render json: @category,status: :created, serializer: AttributesCategorySerializer, status_method: "Created", :location => api_v1_category_path(@category), root: "data"
     else
       record_errors(@category)
     end
@@ -33,7 +33,7 @@ class Api::V1::CategoriesController < ApplicationController
   def update
     if @category
       if @category.update(category_params)
-        render json: @category,status: :ok, root: "data"
+        render json: @category,serializer: AttributesCategorySerializer, status_method: "Updated", status: :ok, root: "data"
       else
         record_errors(@category)
       end
@@ -112,7 +112,7 @@ class Api::V1::CategoriesController < ApplicationController
 
   def categories_by_search
     @categories = Category.search_name(params[:category][:name],@page,@per_page)
-    render json: @categories,status: :ok, include: @include, root: "data",meta: meta_attributes(@categories)
+    render json: @categories,status: :ok, include: @include, each_serailizer: SimpleCategorySerializer, fields: set_fields, root: "data",meta: meta_attributes(@categories)
   end
 
   private
@@ -123,6 +123,19 @@ class Api::V1::CategoriesController < ApplicationController
       end
       @page ||= 1
       @per_page ||= 10
+    end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
     end
 
     def set_category

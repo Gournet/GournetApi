@@ -104,38 +104,38 @@ class Api::V1::UsersController < ApplicationController
 
   def users_with_addresses
     @users = User.users_with_addresses(@page,@per_page)
-    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
+    render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields,meta: meta_attributes(@users)
   end
 
   def users_with_alergies
     @users = User.users_with_alergies(@page,@per_page)
-    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
+    render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields,meta: meta_attributes(@users)
 
   end
 
   def users_with_orders
     @users = User.users_with_alergies(@page,@per_page)
-    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
+    render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields, meta: meta_attributes(@users)
   end
 
   def users_with_favorite_dishes
     @users = User.users_with_favorite_dishes(@page,@per_page)
-    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
+    render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields, meta: meta_attributes(@users)
   end
 
   def users_with_rating_dishes
     @users = User.users_with_rating_dishes(@page,@per_page)
-    render json: @users, status: :ok,root: "data",meta: meta_attributes(@users)
+    render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields, meta: meta_attributes(@users)
   end
 
   def best_seller_users_per_month
     @users = User.best_seller_users_per_month(params[:user][:year].to_i,params[:user][:month].to_i)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, each_serializer: SimpleUserSerializer,fields: set_fields,root: "data"
   end
 
   def best_seller_users_per_year
     @users = User.best_seller_users_per_year(params[:user][:year].to_i)
-    render json: @users, status: :ok, include: @include,root: "data"
+    render json: @users, status: :ok, each_serializer: SimpleUserSerializer,fields: set_fields,root: "data"
   end
 
   private
@@ -147,6 +147,19 @@ class Api::V1::UsersController < ApplicationController
       end
       @page ||= 1
       @per_page ||= 10
+    end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
     end
 
     def set_user

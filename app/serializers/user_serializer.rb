@@ -1,5 +1,6 @@
 class UserSerializer < ActiveModel::Serializer
   attributes :id,:name,:lastname,:email,:username,:mobile,:avatar,:birthday,:uid,:provider
+  attribute :type
   has_many :addresses
   has_many :alergies
   has_many :orders
@@ -8,4 +9,8 @@ class UserSerializer < ActiveModel::Serializer
   has_many :r_dishes
   has_many :c_dishes
   has_many :v_comments
+
+  def type
+    "user"
+  end
 end

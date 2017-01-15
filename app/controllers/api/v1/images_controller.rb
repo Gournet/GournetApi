@@ -32,7 +32,7 @@ class Api::V1::ImagesController < ApplicationController
     @image = Image.new(image_params)
     @image.dish_id = params[:dish_id]
     if @image.save
-      render json: @image, status: :created, :location => api_v1_image_path(@image),root: "data"
+      render json: @image, status: :created, serializer: AttributesImageSerializer, status_method: "Created", :location => api_v1_image_path(@image),root: "data"
     else
       record_errors(@image)
     end
@@ -43,7 +43,7 @@ class Api::V1::ImagesController < ApplicationController
       chef = Dish.dish_by_id(params[:dish_id]).chef.id
       if chef == current_chef.id
         if @image.update(image_params)
-          render json: @image, status: :ok,root: "data"
+          render json: @image, status: :ok, serializer: AttributesImageSerializer, status_method: "Updated",root: "data"
         else
           record_errors(@image)
         end

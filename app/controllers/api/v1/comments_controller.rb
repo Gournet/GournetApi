@@ -34,7 +34,7 @@ class Api::V1::CommentsController < ApplicationController
     @comment.user_id =  current_user.id
     @comment.dish_id =  params[:dish_id]
     if @comment.save
-      render json: @comment, status: :created, :location => api_v1_comment_path(@comment),root: "data"
+      render json: @comment, status: :created, status_method: "Created", serializer: AttributesCommentSerializer, :location => api_v1_comment_path(@comment),root: "data"
     else
       record_errors(@comment)
     end
@@ -44,7 +44,7 @@ class Api::V1::CommentsController < ApplicationController
     if @comment
       if @comment.user.id ==  current_user.id
         if @comment.update(comment_params)
-          render json: @comment, status: :ok,root: "data"
+          render json: @comment, status: :ok, status_method: "Updated", serializer: AttributesCommentSerializer, root: "data"
         else
           record_errors(@comment)
         end
@@ -75,7 +75,7 @@ class Api::V1::CommentsController < ApplicationController
 
   def comments_with_votes_by_dish
     @comments = Comment.comments_with_votes_by_dish(params[:dish_id],@page,@per_page)
-    render json: @comments, status: :ok,root: "data",meta: meta_attributes(@comments)
+    render json: @comments,each_serializer: SimpleCommentSerializer, fields: set_fields, status: :ok,root: "data",meta: meta_attributes(@comments)
   end
 
   def add_vote
@@ -98,6 +98,19 @@ class Api::V1::CommentsController < ApplicationController
 
     def comment_params
       params.require(:comment).permit(:description)
+    end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
     end
 
     def set_comment

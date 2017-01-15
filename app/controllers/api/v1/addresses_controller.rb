@@ -31,7 +31,7 @@ class Api::V1::AddressesController < ApplicationController
     @address = Address.new(address_params)
     @address.user_id = current_user.id
     if @address.save
-      render json: @address, status: :created, :location => api_v1_address_path(@address), root: "data"
+      render json: @address, status: :created, status_method: "Created", serializer: AttributesAddressSerializer,  :location => api_v1_address_path(@address), root: "data"
     else
       record_errors(@address)
     end
@@ -41,7 +41,7 @@ class Api::V1::AddressesController < ApplicationController
     if @address
       if @address.user_id == current_user.id
         if @address.update(address_params)
-          render json: @address, status: :ok, root: "data"
+          render json: @address, status: :ok, status_method: "Updated",  serializer: AttributesAddressSerializer, root: "data"
         else
           record_errors(@address)
         end
@@ -72,7 +72,7 @@ class Api::V1::AddressesController < ApplicationController
 
   def popular_addresses
     @addresses = Address.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page)
-    render json: @addresses, status: :ok, include: @include, root: "data",meta: meta_attributes(@addresses)
+    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields, root: "data",meta: meta_attributes(@addresses)
   end
 
   def find_adddress_by_lat_and_lng
@@ -82,7 +82,7 @@ class Api::V1::AddressesController < ApplicationController
 
   def addresses_with_orders
     @addresses =  Address.addresses_with_orders(@page,@per_page)
-    render json: @addresses, status: :ok, root: "data",meta: meta_attributes(@addresses)
+    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields, root: "data",meta: meta_attributes(@addresses)
   end
 
   private
@@ -101,6 +101,19 @@ class Api::V1::AddressesController < ApplicationController
 
     def address_params
       params.require(:address).permit(:address,:lat,:lng)
+    end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
     end
 
     def set_include

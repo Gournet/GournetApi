@@ -2,7 +2,7 @@ class Api::V1::ChefsController < ApplicationController
   include ControllerUtility
   before_action :set_pagination, only: [:index,:chefs_by_ids,:chefs_by_not_ids,:chefs_with_dishes,
     :chefs_with_followers,:chefs_with_orders,:chefs_with_orders_today,:chefs_with_orders_yesterday,
-    :chefs_with_orders_week,:chefs_with_orders_month,:chefs_with_orders_year]
+    :chefs_with_orders_week,:chefs_with_orders_month,:chefs_with_orders_year,:professional,:amateur,:catering_specialist,:cooking_student,:other]
   before_action :set_chef, only: [:show,:destroy,:follow,:unfollow]
   before_action :authenticate_admin!, only: [:destroy]
   before_action :authenticate_user!, only: [:follow,:unfollow]
@@ -36,6 +36,31 @@ class Api::V1::ChefsController < ApplicationController
     end
   end
 
+  def professional
+    @chefs = Chef.profesional.paginate(:page => @page, :per_page => @per_page)
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+  end
+
+  def amateur
+    @chefs = Chef.amateur.paginate(:page => @page, :per_page => @per_page)
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+  end
+
+  def catering_specialist
+    @chefs = Chef.especializado_en_catering.paginate(:page => @page, :per_page => @per_page)
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+  end
+
+  def cooking_student
+    @chefs = Chef.estudiante_de_cocina.paginate(:page => @page,:per_page => @per_page)
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+  end
+
+  def other
+    @chefs = Chef.otro.paginate(:page => @page, :per_page => @per_page)
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+  end
+
   def chefs_by_ids
     @chefs = Chef.chefs_by_ids(params[:chef][:ids],@page,@per_page)
     render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
@@ -48,17 +73,17 @@ class Api::V1::ChefsController < ApplicationController
 
   def chefs_with_dishes
     @chefs = Chef.chefs_with_dishes(@page,@per_page)
-    render json: @chefs,status: :ok, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer,meta: meta_attributes(@chefs)
   end
 
   def chefs_with_followers
     @chefs = Chef.chefs_with_followers(@page, @per_page)
-    render json: @chefs,status: :ok, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer,meta: meta_attributes(@chefs)
   end
 
   def chefs_with_orders
     @chefs = Chef.chefs_with_orders(@page,@per_page)
-    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs, status: :ok, root: "data",fields: set_fields, each_serializer: SimpleChefSerializer, meta: meta_attributes(@chefs)
   end
 
   def chefs_with_orders_today
@@ -113,12 +138,12 @@ class Api::V1::ChefsController < ApplicationController
 
   def best_seller_chefs_per_month
     @chefs = Chef.best_seller_chefs_per_month(params[:chef][:year].to_i,params[:chef][:month].to_i)
-    render json: @chefs, status: :ok, root: "data"
+    render json: @chefs, status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer
   end
 
   def best_seller_chefs_per_year
     @chefs = Chef.best_seller_chefs_per_year(params[:chef][:year].to_i)
-    render json: @chefs, status: :ok, root: "data"
+    render json: @chefs, status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer
   end
 
   def follow
@@ -158,6 +183,19 @@ class Api::V1::ChefsController < ApplicationController
       end
       @page ||= 1
       @per_page ||= 10
+    end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
     end
 
     def set_chef

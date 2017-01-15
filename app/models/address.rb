@@ -17,8 +17,8 @@ class Address < ApplicationRecord
       .where(addresses: { user_id: user_id })
       .group("addresses.id")
       .paginate(:page => page,:per_page => per_page)
-      .reorder("COUNT(orders.id) DESC").references(:orders)
-  end
+      .reorder("COUNT(orders.id) DESC")
+    end
 
   def self.addresses_by_user(user_id,page = 1,per_page = 10)
     includes(orders: [:dish]).where(user_id: user_id)
@@ -32,10 +32,10 @@ class Address < ApplicationRecord
   end
 
   def self.addresses_with_orders(page = 1, per_page = 10)
-    joins(:orders).select("addresses.*")
+    joins(:orders)
       .group("addresses.id")
       .paginate(:page => page,:per_page => per_page)
-      .reorder("COUNT(orders.dish_id) DESC")
+      .reorder("COUNT(orders.id) DESC")
   end
 
   belongs_to :user

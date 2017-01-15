@@ -1,7 +1,7 @@
 class Api::V1::OrdersController < ApplicationController
   include ControllerUtility
   before_action :authenticate_admin!, only: [:destroy]
-  before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,:orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year,:orders_today_resource,:orders_yesterday_resource,:orders_week_resource,:orders_month_resource,:orders_year_resource]
+  before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,:orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year,:orders_today_resource,:orders_yesterday_resource,:orders_week_resource,:orders_month_resource,:orders_year_resource,:card,:cash]
   before_action :set_order, only: [:show]
   before_action :authenticate_user!, only: [:create]
   before_action :set_include
@@ -55,7 +55,7 @@ class Api::V1::OrdersController < ApplicationController
           available.count = available.count - @order.count
           available.save
           if @order.save
-            render json: @order,status: :created, :location => api_v1_order_path(@order),root: "data"
+            render json: @order,status: :created, serializer: AttributesOrderSerializer, status_method: "Created", :location => api_v1_order_path(@order),root: "data"
           else
             record_errors(@order)
           end
@@ -81,6 +81,16 @@ class Api::V1::OrdersController < ApplicationController
     else
       record_not_found
     end
+  end
+
+  def card
+    @orders = Order.card.paginate(:page => @page, :per_page => @per_page)
+    render json: @orders, status: :ok, each_serializer:AttributesOrderSerializer,status_method: "Success", fields: set_fields, meta: meta_attributes(@orders), root: "data"
+  end
+
+  def cash
+    @orders = Order.cash.paginate(:page => @page ,:per_page => @per_page)
+    render json: @orders, status: :ok,each_serializer: AttributesOrderSerializer,status_method: "Success", fields: set_fields, meta: meta_attributes(@orders), root: "data"
   end
 
   def orders_by_ids
@@ -196,6 +206,20 @@ class Api::V1::OrdersController < ApplicationController
       params.require(:order).permit(:count,:price,:comment,:day,:estimated_time,:payment_type)
       params.require(:relationship).permit(:address_id,:chef_id,:dish_id)
     end
+
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
+    end
+
 
     def set_include
       temp = params[:include]

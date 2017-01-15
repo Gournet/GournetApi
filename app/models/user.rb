@@ -12,7 +12,8 @@ class User < ActiveRecord::Base
 
 
   def self.search(text,page = 1,per_page = 10)
-    where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
+      .where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
       .paginate(:page => page, :per_page => per_page)
   end
 
