@@ -5,21 +5,22 @@ class Api::V1::AddressesController < ApplicationController
   before_action :authenticate_member!, only: [:destroy]
   before_action :set_pagination, only: [:index,:popular_addresses,:find_adddress_by_lat_and_lng,:addresses_with_orders]
   before_action :set_address, only: [:show,:update,:destroy]
+  before_action :set_include
 
   def index
-    @addresses = nil
     if params.has_key?(:user_id)
-      @addresses = Address.addresses_by_user(params[:user_id],@page,@per_page)
+      @addresses = params.has_key?(:sort) ? Address.unscoped.addresses_by_user(params[:user_id],@page,@per_page) : Address.addresses_by_user(params[:user_id],@page,@per_page)
     else
-      @addresses = Address.load_addresses(@page,@per_page)
+      @addresses = params.has_key?(:sort) ? Address.unscoped.load_addresses(@page,@per_page) : Address.load_addresses(@page,@per_page)
     end
-    render json: @addresses, status: :ok
+    @addresses = set_orders(params,@addresses)
+    render json: @addresses, status: :ok, include: @include, root: "data", meta: meta_attributes(@addresses)
   end
 
   def show
     if @address
       if stale?(@address,public: true)
-        render json: @address, status: :ok
+        render json: @address, status: :ok, include: @include, root: "data"
       end
     else
       record_not_found
@@ -30,7 +31,7 @@ class Api::V1::AddressesController < ApplicationController
     @address = Address.new(address_params)
     @address.user_id = current_user.id
     if @address.save
-      render json: @address, status: :created, :location => api_v1_address_path(@address)
+      render json: @address, status: :created, status_method: "Created", serializer: AttributesAddressSerializer,  :location => api_v1_address_path(@address), root: "data"
     else
       record_errors(@address)
     end
@@ -40,7 +41,7 @@ class Api::V1::AddressesController < ApplicationController
     if @address
       if @address.user_id == current_user.id
         if @address.update(address_params)
-          render json: @address, status: :ok
+          render json: @address, status: :ok, status_method: "Updated",  serializer: AttributesAddressSerializer, root: "data"
         else
           record_errors(@address)
         end
@@ -70,18 +71,21 @@ class Api::V1::AddressesController < ApplicationController
   end
 
   def popular_addresses
-    @addresses = Address.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page)
-    render json: @addresses, status: :ok
+    @addresses = params.has_key?(:sort) ? Address.unscoped.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page) : Address.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page)
+    @addresses = set_orders(params,@addresses)
+    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields, root: "data",meta: meta_attributes(@addresses)
   end
 
   def find_adddress_by_lat_and_lng
-    @addresses = Address.address_by_lat_and_lng(params[:address][:lat].to_f,params[:address][:lng].to_f,@page,@per_page)
-    render json: @addresses, status: :ok
+    @addresses = params.has_key?(:sort) ? Address.unscoped.address_by_lat_and_lng(params[:address][:lat].to_f,params[:address][:lng].to_f,@page,@per_page) : Address.address_by_lat_and_lng(params[:address][:lat].to_f,params[:address][:lng].to_f,@page,@per_page)
+    @addresses = set_orders(params,@addresses)
+    render json: @addresses, status: :ok, include: @include, root: "data",meta: meta_attributes(@addresses)
   end
 
   def addresses_with_orders
-    @addresses =  Address.addresses_with_orders(@page,@per_page)
-    render json: @addresses, status: :ok
+    @addresses =  params.has_key?(:sort) ? Address.unscoped.addresses_with_orders(@page,@per_page) : Address.addresses_with_orders(@page,@per_page)
+    @addresses = set_orders(params,@addresses)
+    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields, root: "data",meta: meta_attributes(@addresses)
   end
 
   private
@@ -102,4 +106,50 @@ class Api::V1::AddressesController < ApplicationController
       params.require(:address).permit(:address,:lat,:lng)
     end
 
+    def set_fields
+      array = params[:fields].split(",") if params.has_key?(:fields)
+      array ||= []
+      array_s = nil
+      if !array.empty?
+        array_s = []
+      end
+      array.each do |a|
+        array_s.push(a.to_sym)
+      end
+      array_s
+    end
+
+    def set_include
+      temp = params[:include]
+      temp ||= "*"
+      if temp.include? "**"
+        temp = "*"
+      end
+      @include = temp
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "address", "-address"
+          query = query.order_by_address(ord)
+        when "lat", "-lat"
+          query = query.order_by_lat(ord)
+        when "lng", "-lng"
+          query = query.order_by_lng(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
+    end
 end

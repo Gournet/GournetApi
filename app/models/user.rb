@@ -7,33 +7,37 @@ class User < ActiveRecord::Base
   mount_uploader :avatar, AvatarUploader
 
   default_scope {order("users.name ASC, users.lastname ASC")}
-  scope :order_by_email, -> {reorder("users.email ASC")}
-  scope :order_by_username, -> {reorder("users.username ASC")}
-
+  scope :order_by_email, -> (ord) {order("users.email #{ord}")}
+  scope :order_by_username, -> (ord) {order("users.username #{ord}")}
+  scope :order_by_name, -> (ord) {order("users.name #{ord}")}
+  scope :order_by_lastname, -> (ord) {order("users.lastname #{ord}")}
+  scope :order_by_birthday, -> (ord) {order("users.birthday #{ord}")}
+  scope :order_by_created_at, -> (ord) {order("users.created_at #{ord}")}
 
   def self.search(text,page = 1,per_page = 10)
-    where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
+      .where("email LIKE ? OR username LIKE ?", "#{text.downcase}%", "#{text.downcase}%")
       .paginate(:page => page, :per_page => per_page)
   end
 
   def self.load_users(page = 1, per_page = 10)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
     .paginate(:page => page,:per_page => per_page)
   end
 
   def self.user_by_id(id)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
     .find_by_id(id)
   end
 
   def self.users_by_ids(ids,page = 1, per_page = 10)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
     .where(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
 
   def self.users_by_not_ids(ids,page = 1, per_page = 10)
-    includes(:comments,:addresses,:alergies,:dishes,:chefs,orders: [:dish,:chef])
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
     .where.not(id: ids)
     .paginate(:page => page, :per_page => per_page)
   end
@@ -148,9 +152,11 @@ class User < ActiveRecord::Base
   has_many :favorite_dishes, dependent: :destroy
   has_many :dishes, -> {reorder('dishes.name ASC')}, through: :favorite_dishes
   has_many :rating_dishes, dependent: :nullify
-  has_many :r_dishes, through: :rating_dish, source: :dish
+  has_many :r_dishes, through: :rating_dishes, source: :dish
+  has_many :comments, dependent: :destroy
+  has_many :c_dishes, through: :comments, source: :dish
   has_many :comment_votes, dependent: :nullify
-  has_many :comments, ->{reorder('comments.created_at DESC')}, through: :comment_votes
+  has_many :v_comments, ->{reorder('comments.created_at DESC')}, through: :comment_votes, source: :comment
 
 
   validates :name, :lastname, presence: true
@@ -212,7 +218,7 @@ class User < ActiveRecord::Base
   end
 
   def self.query_orders(date,page,per_page)
-    includes(orders: [:dish, :chef, :address])
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
       .where(orders: { day: date } )
       .group("users.id")
       .paginate(:page => page, :per_page => per_page)
@@ -221,12 +227,11 @@ class User < ActiveRecord::Base
   end
 
   def self.query_orders_user(user,date)
-    includes(orders: [:dish, :chef, :address])
+    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
       .where(users: { id: user})
       .where(orders: { day: date } )
       .reorder("orders.day DESC")
       .references(:orders)
       .first
   end
-
 end

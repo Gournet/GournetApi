@@ -61,3 +61,6 @@ gem "awesome_print", require:"ap"
 
 #request limit
 gem 'rack-attack'
+
+#serializers
+gem 'active_model_serializers', '0.10.0.rc4'

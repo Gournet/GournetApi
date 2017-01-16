@@ -8,8 +8,12 @@ class Chef < ActiveRecord::Base
 
 
   default_scope {order('chefs.name ASC, chefs.lastname ASC')}
-  scope :order_by_email, -> {reorder('chefs.email ASC')}
-  scope :order_by_username, -> {reorder('chefs.username ASC')}
+  scope :order_by_email, -> (ord) {order("chefs.email #{ord}")}
+  scope :order_by_username,  -> (ord) {order("chefs.username #{ord}")}
+  scope :order_by_name,  -> (ord) {order("chefs.name #{ord}")}
+  scope :order_by_lastname, -> (ord)  {order("chefs.lastname #{ord}")}
+  scope :order_by_birthday, -> (ord) {order("chefs.birthday #{ord}")}
+  scope :order_by_created_at,  -> (ord) {order("chefs.created_at #{ord}")}
 
   def self.load_chefs(page = 1, per_page = 10)
     includes(:dishes,:users,orders: [:user,:dish,:address])
@@ -145,7 +149,7 @@ class Chef < ActiveRecord::Base
   protected
 
     def self.query_orders(date,page,per_page)
-      includes(orders: [:dish,:user])
+      includes(:dishes,:users,orders: [:dish,:user,:address])
         .where(orders: {day: date})
         .group("chefs.id")
         .paginate(:page => page, :per_page => per_page)
@@ -154,7 +158,7 @@ class Chef < ActiveRecord::Base
     end
 
     def self.query_orders_chef(chef,date)
-      includes(orders: [:dish,:user])
+      includes(:dishes,:users,orders: [:dish,:user,:address])
         .where(orders: {day: date})
         .where(chefs: {id: chef})
         .reorder("orders.day")

@@ -1,6 +1,10 @@
 class Address < ApplicationRecord
 
   default_scope {order('addresses.created_at DESC')}
+  scope :order_by_address, -> (ord) {order("addresses.address #{ord}")}
+  scope :order_by_lat, -> (ord) {order("addresses.lat #{ord}")}
+  scope :order_by_lng, -> (ord) {order("addresses.lng #{ord}")}
+  scope :order_by_created_at, -> (ord) {order("addresses.created_at #{ord}")}
 
   def self.address_by_id(id)
     includes(:user,orders: [:dish,:chef])
@@ -13,12 +17,12 @@ class Address < ApplicationRecord
   end
 
   def self.popular_addresses_by_orders_and_user(user_id,page = 1, per_page = 10)
-    joins(:orders)
+      joins(:orders)
       .where(addresses: { user_id: user_id })
       .group("addresses.id")
       .paginate(:page => page,:per_page => per_page)
-      .reorder("COUNT(orders.id) DESC").references(:orders)
-  end
+      .reorder("COUNT(orders.id) DESC")
+    end
 
   def self.addresses_by_user(user_id,page = 1,per_page = 10)
     includes(orders: [:dish]).where(user_id: user_id)
@@ -32,10 +36,10 @@ class Address < ApplicationRecord
   end
 
   def self.addresses_with_orders(page = 1, per_page = 10)
-    joins(:orders).select("addresses.*")
+    joins(:orders)
       .group("addresses.id")
       .paginate(:page => page,:per_page => per_page)
-      .reorder("COUNT(orders.dish_id) DESC")
+      .reorder("COUNT(orders.id) DESC")
   end
 
   belongs_to :user

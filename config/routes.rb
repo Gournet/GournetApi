@@ -82,6 +82,11 @@ Rails.application.routes.draw do
           get 'chefsWithOrdersYear', to: "chefs#chefs_with_orders_year"
           get 'bestSellerChefsMonth', to: "chefs#best_seller_chefs_per_month"
           get 'bestSellerChefsYear', to: "chefs#best_seller_chefs_per_year"
+          get 'professional', to: "chefs#professional"
+          get 'amateur', to: "chefs#amateur"
+          get 'cateringSpecialist',  to: "chefs#catering_specialist"
+          get 'other', to: "chefs#other"
+          get 'cookingStudent', to: "chefs#cooking_student"
         end
         member do
           get 'ordersToday', to: "chefs#orders_today"
@@ -108,10 +113,6 @@ Rails.application.routes.draw do
           post 'dishesByIds', to: "dishes#dishes_by_ids"
           post 'dishesByNotIds', to: "dishes#dishes_by_not_ids"
           get 'popularDishesByRatingGreaterThan', to: "dishes#popular_dishes_by_rating_greater_than"
-          get 'dishesByPrice', to: "dishes#dishes_by_price"
-          get 'dishesByCalories', to: "dishes#dishes_by_calories"
-          get 'dishesByCookingTime', to: "dishes#dishes_by_cooking_time"
-          get 'dishesByRating', to: "dishes#dishes_by_rating"
           get 'dishesWithRating', to: "dishes#dishes_with_rating"
           get 'dishesWithComments', to: "dishes#dishes_with_comments"
           get 'dishesWithRatingAndComments', to: "dishes#dishes_with_rating_and_comments"
@@ -142,6 +143,18 @@ Rails.application.routes.draw do
           end
         end
         resources :images
+        resources :alergies, only: [:create] do
+          collection do
+            post 'addAlergiesDish', to: "alergies#add_alergies_dish"
+            delete 'removeAlergiesDish', to: "alergies#remove_alergies_dish"
+          end
+        end
+        resources :categories, only: [:create] do
+          collection do
+            post 'addCategoriesDish', to: "categories#add_categories_dish"
+            delete 'removeCategoriesDish', to: "categories#remove_categories_dish"
+          end
+        end
       end
 
       scope "/administrator" do
@@ -153,6 +166,8 @@ Rails.application.routes.draw do
             get 'alergiesWithDishes', to: "alergies#alergies_with_dishes"
             get 'alergiesWithDishesAndUsers', to: "alergies#alergies_with_dishes_and_users"
             get 'alergiesBySearch', to: "alergies#alergies_by_search"
+            post 'addAlergiesUser', to: "alergies#add_alergies"
+            delete 'removeAlergiesUser', to: "alergies#remove_alergies"
           end
         end
         resources :categories do
@@ -173,6 +188,8 @@ Rails.application.routes.draw do
           get 'ordersWeek', to: "orders#orders_week"
           get 'ordersMonth', to: "orders#orders_month"
           get 'ordersYear', to: "orders#orders_year"
+          get 'cash', to: "orders#cash"
+          get 'card', to: "orders#card"
         end
       end
       resources :comments, except: [:create] do

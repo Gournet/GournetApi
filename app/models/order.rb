@@ -1,6 +1,11 @@
 class Order < ApplicationRecord
   include Utility
   default_scope {order("orders.day DESC")}
+  scope :order_by_day, -> (ord) {order("orders.day #{ord}")}
+  scope :order_by_price, -> (ord) {order("orders.price #{ord}")}
+  scope :order_by_count, -> (ord) {order("orders.count #{ord}")}
+  scope :order_by_estimated_time, -> (ord) {order("orders.estimated_time #{ord}")}
+  scope :order_by_created_at, -> (ord) {order("orders.created_at #{ord}")}
 
   def self.load_orders(page = 1, per_page = 10)
     includes(:address,:user,:dish,:chef)

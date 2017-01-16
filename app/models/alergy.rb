@@ -1,6 +1,8 @@
 class Alergy < ApplicationRecord
 
     default_scope {order('alergies.name ASC')}
+    scope :order_by_name, -> (ord) {order("alergies.name #{ord}")}
+    scope :order_by_created_at, -> (ord) {order("alergies.created_at #{ord}")}
 
     def self.search_name(name,page = 1,per_page = 10)
       includes(:dishes,:users).where("alergies.name LIKE ?", "#{name.downcase}%")
