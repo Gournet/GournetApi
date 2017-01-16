@@ -7,26 +7,28 @@ class Admin < ActiveRecord::Base
   mount_uploader :avatar, AvatarUploader
 
   default_scope {order('admins.name ASC, admins.lastname ASC')}
-  scope :order_by_username, -> {reorder('admins.username ASC')}
-  scope :order_by_email, -> {reorder('admins.email ASC')}
+  scope :order_by_username, -> (ord) {order("admins.username #{ord}")}
+  scope :order_by_email, -> (ord) {order("admins.email #{ord}")}
+  scope :order_by_name, -> (ord) {order("admins.name #{ord}")}
+  scope :order_by_lastname, -> (ord) {order("admins.lastname")}
+  scope :order_by_created_at, -> (ord) {order("admins.created_at")}
 
   def self.admin_by_id(id)
     find_by_id(id)
   end
 
   def self.load_admins(page = 1, per_page = 10)
-    all
-    .paginate(:page => page, :per_page => per_page)
+    paginate(:page => page, :per_page => per_page)
   end
 
   def self.admins_by_ids(ids, page = 1 ,per_page = 10)
     where(id:ids)
-    .paginate(:page => page, :per_page => per_page)
+      .paginate(:page => page, :per_page => per_page)
   end
 
   def self.admins_by_not_ids(ids,page = 1, per_page = 10)
     where.not(id:ids)
-    .paginate(:page => page, :per_page => per_page)
+      .paginate(:page => page, :per_page => per_page)
   end
 
   def self.admin_by_username(username)

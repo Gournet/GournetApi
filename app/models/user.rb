@@ -7,9 +7,12 @@ class User < ActiveRecord::Base
   mount_uploader :avatar, AvatarUploader
 
   default_scope {order("users.name ASC, users.lastname ASC")}
-  scope :order_by_email, -> {reorder("users.email ASC")}
-  scope :order_by_username, -> {reorder("users.username ASC")}
-
+  scope :order_by_email, -> (ord) {order("users.email #{ord}")}
+  scope :order_by_username, -> (ord) {order("users.username #{ord}")}
+  scope :order_by_name, -> (ord) {order("users.name #{ord}")}
+  scope :order_by_lastname, -> (ord) {order("users.lastname #{ord}")}
+  scope :order_by_birthday, -> (ord) {order("users.birthday #{ord}")}
+  scope :order_by_created_at, -> (ord) {order("users.created_at #{ord}")}
 
   def self.search(text,page = 1,per_page = 10)
     includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
@@ -231,5 +234,4 @@ class User < ActiveRecord::Base
       .references(:orders)
       .first
   end
-
 end

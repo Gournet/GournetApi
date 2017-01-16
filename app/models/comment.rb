@@ -1,6 +1,7 @@
 class Comment < ApplicationRecord
 
   default_scope {order('comments.created_at DESC')}
+  scope :order_by_created_at, -> (ord) {order("comments.created_at #{ord}")} 
 
 
   def self.load_comments(page = 1,per_page = 10)

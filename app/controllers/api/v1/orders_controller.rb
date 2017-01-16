@@ -9,16 +9,15 @@ class Api::V1::OrdersController < ApplicationController
   def index
     @orders = nil
     if params.has_key?(:user_id)
-      @orders = Order.orders_by_user_id(params[:user_id],@page,@per_page)
-
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_by_user_id(params[:user_id],@page,@per_page) : Order.orders_by_user_id(params[:user_id],@page,@per_page)
     elsif params.has_key?(:chef_id)
-      @orders =  Order.orders_by_chef_id(params[:chef_id],@page,@per_page)
-
+      @orders =  params.has_key?(:sort) ? Order.unscoped.orders_by_chef_id(params[:chef_id],@page,@per_page) : Order.orders_by_chef_id(params[:chef_id],@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @orders = Order.orders_by_dish_id(params[:dish_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_by_dish_id(params[:dish_id],@page,@per_page) : Order.orders_by_dish_id(params[:dish_id],@page,@per_page)
     else
-      @orders = Order.load_orders(@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.load_orders(@page,@per_page) : Order.load_orders(@page,@per_page)
     end
+    @orders = set_orders(params,@orders)
     render json: @orders,status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
@@ -84,107 +83,121 @@ class Api::V1::OrdersController < ApplicationController
   end
 
   def card
-    @orders = Order.card.paginate(:page => @page, :per_page => @per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.card.paginate(:page => @page, :per_page => @per_page) : Order.card.paginate(:page => @page, :per_page => @per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, each_serializer:AttributesOrderSerializer,status_method: "Success", fields: set_fields, meta: meta_attributes(@orders), root: "data"
   end
 
   def cash
-    @orders = Order.cash.paginate(:page => @page ,:per_page => @per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.cash.paginate(:page => @page ,:per_page => @per_page) : Order.cash.paginate(:page => @page ,:per_page => @per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok,each_serializer: AttributesOrderSerializer,status_method: "Success", fields: set_fields, meta: meta_attributes(@orders), root: "data"
   end
 
   def orders_by_ids
-    @orders = Order.orders_by_ids(params[:order][:ids],@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_by_ids(params[:order][:ids],@page,@per_page) : Order.orders_by_ids(params[:order][:ids],@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_by_not_ids
-    @orders = Order.orders_by_not_ids(params[:order][:ids],@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_by_not_ids(params[:order][:ids],@page,@per_page) : Order.orders_by_not_ids(params[:order][:ids],@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_today
-    @orders = Order.orders_today(@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_today(@page,@per_page) : Order.orders_today(@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_today_resource
     @orders = nil
     if params.has_key?(:user_id)
-      @orders = Order.orders_today_user(params[:user_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_today_user(params[:user_id],@page,@per_page) : Order.orders_today_user(params[:user_id],@page,@per_page)
     elsif params.has_key?(:chef_id)
-      @orders = Order.orders_today_chef(params[:chef_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_today_chef(params[:chef_id],@page,@per_page) : Order.orders_today_chef(params[:chef_id],@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @orders = Order.orders_today_dish(params[:dish_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_today_dish(params[:dish_id],@page,@per_page) : Order.orders_today_dish(params[:dish_id],@page,@per_page)
     end
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_yesterday
-    @orders = Order.orders_today(@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_today(@page,@per_page) : Order.orders_today(@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_yesterday_resource
     @orders = nil
     if params.has_key?(:user_id)
-      @orders = Order.orders_yesterday_user(params[:user_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_yesterday_user(params[:user_id],@page,@per_page) : Order.orders_yesterday_user(params[:user_id],@page,@per_page)
     elsif params.has_key?(:chef_id)
-      @orders = Order.orders_yesterday_chef(params[:chef_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_yesterday_chef(params[:chef_id],@page,@per_page) : Order.orders_yesterday_chef(params[:chef_id],@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @orders = Order.orders_yesterday_dish(params[:dish_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_yesterday_dish(params[:dish_id],@page,@per_page) : Order.orders_yesterday_dish(params[:dish_id],@page,@per_page)
     end
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_week
-    @orders = Order.orders_week(@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_week(@page,@per_page) : Order.orders_week(@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_week_resource
     @orders = nil
     if params.has_key?(:user_id)
-      @orders = Order.orders_week_user(params[:user_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_week_user(params[:user_id],@page,@per_page) : Order.orders_week_user(params[:user_id],@page,@per_page)
     elsif params.has_key?(:chef_id)
-      @orders = Order.orders_week_chef(params[:chef_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_week_chef(params[:chef_id],@page,@per_page) : Order.orders_week_chef(params[:chef_id],@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @orders = Order.orders_week_dish(params[:dish_id],@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_week_dish(params[:dish_id],@page,@per_page) : Order.orders_week_dish(params[:dish_id],@page,@per_page)
     end
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_month
-    @orders = Order.orders_month(params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_month(params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page) : Order.orders_month(params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_month_resource
     @orders = nil
     if params.has_key?(:user_id)
-      @orders = Order.orders_month_user(params[:user_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_month_user(params[:user_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page) : Order.orders_month_user(params[:user_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
     elsif params.has_key?(:chef_id)
-      @orders = Order.orders_month_chef(params[:chef_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_month_chef(params[:chef_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page) : Order.orders_month_chef(params[:chef_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @orders = Order.orders_month_dish(params[:dish_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_month_dish(params[:dish_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page) : Order.orders_month_dish(params[:dish_id],params[:order][:year].to_i,params[:order][:month].to_i,@page,@per_page)
     end
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_year
-    @orders = Order.orders_year(params[:order][:year].to_i,@page,@per_page)
+    @orders = params.has_key?(:sort) ? Order.unscoped.orders_year(params[:order][:year].to_i,@page,@per_page) : Order.orders_year(params[:order][:year].to_i,@page,@per_page)
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
   def orders_year_resource
     @orders = nil
     if params.has_key?(:user_id)
-      @orders = Order.orders_year_user(params[:user_id],params[:order][:year].to_i,@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_year_user(params[:user_id],params[:order][:year].to_i,@page,@per_page) : Order.orders_year_user(params[:user_id],params[:order][:year].to_i,@page,@per_page)
     elsif params.has_key?(:chef_id)
-      @orders = Order.orders_year_chef(params[:chef_id],params[:order][:year].to_i,@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_year_chef(params[:chef_id],params[:order][:year].to_i,@page,@per_page) : Order.orders_year_chef(params[:chef_id],params[:order][:year].to_i,@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @orders = Order.orders_year_dish(params[:dish_id],params[:order][:year].to_i,@page,@per_page)
+      @orders = params.has_key?(:sort) ? Order.unscoped.orders_year_dish(params[:dish_id],params[:order][:year].to_i,@page,@per_page) : Order.orders_year_dish(params[:dish_id],params[:order][:year].to_i,@page,@per_page)
     end
+    @orders = set_orders(params,@orders)
     render json: @orders, status: :ok, include: @include,root: "data",meta: meta_attributes(@orders)
   end
 
@@ -218,6 +231,33 @@ class Api::V1::OrdersController < ApplicationController
         array_s.push(a.to_sym)
       end
       array_s
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "day", "-day"
+          query = query.order_by_day(ord)
+        when "price", "-price"
+          query = query.order_by_price(ord)
+        when "count", "-count"
+          query = query.order_by_count(ord)
+        when "estimated_time", "-estimated_time"
+          query = query.order_by_estimated_time(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
 

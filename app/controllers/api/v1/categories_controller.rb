@@ -7,7 +7,8 @@ class Api::V1::CategoriesController < ApplicationController
   before_action :set_include
 
   def index
-    @categories = Category.load_categories(@page,@per_page)
+    @categories = params.has_key?(:sort) ? Category.unscoped.load_categories(@page,@per_page) : Category.load_categories(@page,@per_page)
+    @categories = set_orders(params,@categories)
     render json: @categories, status: :ok, include: @include, root: "data",meta: meta_attributes(@categories)
   end
 
@@ -96,22 +97,26 @@ class Api::V1::CategoriesController < ApplicationController
   end
 
   def categories_by_ids
-    @categories = Category.categories_by_ids(params[:category][:ids],@page,@per_page)
+    @categories = params.has_key?(:sort) ? Category.unscoped.categories_by_ids(params[:category][:ids],@page,@per_page) : Category.categories_by_ids(params[:category][:ids],@page,@per_page)
+    @categories = set_orders(params,@categories)
     render json: @categories, status: :ok, include: @include, root: "data",meta: meta_attributes(@categories)
   end
 
   def categories_by_not_ids
-    @categories = Category.categories_by_not_ids(params[:category][:ids],@page,@per_page)
+    @categories = params.has_key?(:sort) ? Category.unscoped.categories_by_not_ids(params[:category][:ids],@page,@per_page) : Category.categories_by_not_ids(params[:category][:ids],@page,@per_page)
+    @categories = set_orders(params,@categories)
     render json: @categories,status: :ok, include: @include, root: "data",meta: meta_attributes(@categories)
   end
 
   def categories_with_dishes
-    @categories = Category.categories_with_dishes(@page,@per_page)
+    @categories = params.has_key?(:sort) ? Category.unscoped.categories_with_dishes(@page,@per_page) : Category.categories_with_dishes(@page,@per_page)
+    @categories = set_orders(params,@categories)
     render json: @categories, status: :ok, root: "data",meta: meta_attributes(@categories)
   end
 
   def categories_by_search
-    @categories = Category.search_name(params[:category][:name],@page,@per_page)
+    @categories = params.has_key?(:sort) ? Category.unscoped.search_name(params[:category][:name],@page,@per_page) : Category.search_name(params[:category][:name],@page,@per_page)
+    @categories = set_orders(params,@categories)
     render json: @categories,status: :ok, include: @include, each_serailizer: SimpleCategorySerializer, fields: set_fields, root: "data",meta: meta_attributes(@categories)
   end
 
@@ -144,6 +149,27 @@ class Api::V1::CategoriesController < ApplicationController
 
     def category_params
       params.require(:category).permit(:name,:description)
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "name", "-name"
+          query = query.order_by_day(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
     def set_include

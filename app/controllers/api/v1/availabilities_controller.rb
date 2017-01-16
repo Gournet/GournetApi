@@ -8,10 +8,11 @@ class Api::V1::AvailabilitiesController < ApplicationController
   def index
     @availabilities = nil
     if params.has_key?(:dish_id)
-      @availabilities = Availability.availabilities_by_dish(params[:dish_id],@page,@per_page)
+      @availabilities = params.has_key?(:sort) ? Availability.unscoped.availabilities_by_dish(params[:dish_id],@page,@per_page) : Availability.availabilities_by_dish(params[:dish_id],@page,@per_page)
     else
-      @availabilities = Availability.load_availabilities(@page,@per_page)
+      @availabilities = params.has_key?(:sort) ? Availability.unscoped.load_availabilities(@page,@per_page) : Availability.load_availabilities(@page,@per_page)
     end
+    @availabilities = set_orders(params,@availabilities)
     render json: @availabilities, status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
@@ -73,27 +74,32 @@ class Api::V1::AvailabilitiesController < ApplicationController
   end
 
   def today
-    @availabilities = Availability.today.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = params.has_key?(:sort) ? Availability.unscoped.today.paginate(:page => @page,:per_page => @per_page) : Availability.today.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = set_orders(params,@availabilities)
     render json: @availabilities,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def tomorrow
-    @availabilities = Availability.tomorrow.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = params.has_key?(:sort) ? Availability.unscoped.tomorrow.paginate(:page => @page,:per_page => @per_page) : Availability.tomorrow.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = set_orders(params,@availabilities)
     render json: @availabilities, status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def next_seven_days
-    @availabilites = Availability.next_seven_days(@page,@per_page)
+    @availabilites = params.has_key?(:sort) ? Availability.unscoped.next_seven_days(@page,@per_page) : Availability.next_seven_days(@page,@per_page)
+    @availabilities = set_orders(params,@availabilities)
     render json: @availabilites,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def today_with_count
-    @availabilities = Availability.today.available_count.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = params.has_key?(:sort) ? Availability.unscoped.today.available_count.paginate(:page => @page,:per_page => @per_page) : Availability.today.available_count.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = set_orders(params,@availabilities)
     render json: @availabilities,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
   def tomorrow_with_count
-    @availabilities = Availability.tomorrow.available_count.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = params.has_key?(:sort) ? Availability.unscoped.tomorrow.available_count.paginate(:page => @page,:per_page => @per_page) : Availability.tomorrow.available_count.paginate(:page => @page,:per_page => @per_page)
+    @availabilities = set_orders(params,@availabilities)
     render json: @availabilities,status: :ok, include: @include, root: "data",meta: meta_attributes(@availabilities)
   end
 
@@ -113,6 +119,31 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
     def availability_params
       params.require(:availability).permit(:day,:count,:available,:end_time,:repeat)
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "day", "-day"
+          query = query.order_by_day(ord)
+        when "count", "-count"
+          query = query.order_by_count(ord)
+        when "end_time", "-end_time"
+          query = query.order_by_end_time(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
     def set_include

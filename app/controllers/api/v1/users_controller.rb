@@ -6,7 +6,8 @@ class Api::V1::UsersController < ApplicationController
   before_action :set_include
 
   def index
-    @users =  User.load_users(@page,@per_page)
+    @users =  params.has_key?(:sort) ? User.unscoped.load_users(@page,@per_page) : User.load_users(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
@@ -38,103 +39,118 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def search
-    @users = User.search(params[:user][:text],@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.search(params[:user][:text],@page,@per_page) : User.search(params[:user][:text],@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def users_by_ids
-    @users = User.users_by_ids(params[:user][:ids],@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.users_by_ids(params[:user][:ids],@page,@per_page) : User.users_by_ids(params[:user][:ids],@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def users_by_not_ids
-    @users = User.users_by_not_ids(params[:user][:ids],@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.users_by_not_ids(params[:user][:ids],@page,@per_page) : User.users_by_not_ids(params[:user][:ids],@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_today
-    @users = User.orders_today(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.orders_today(@page,@per_page) : User.orders_today(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_today_user
-    @users = User.orders_today_user(params[:id])
-    render json: @users, status: :ok, include: @include,root: "data"
+    @user = User.orders_today_user(params[:id])
+    render json: @user, status: :ok, include: @include,root: "data"
   end
 
   def orders_yesterday
-    @users = User.orders_yesterday(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.orders_yesterday(@page,@per_page) : User.orders_yesterday(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_yesterday_user
-    @users = User.orders_yesterday_user(params[:id])
-    render json: @users, status: :ok, include: @include,root: "data"
+    @user = User.orders_yesterday_user(params[:id])
+    render json: @user, status: :ok, include: @include,root: "data"
   end
 
   def orders_week
-    @users = User.orders_week(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.orders_week(@page,@per_page) : User.orders_week(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_week_user
-    @users = User.orders_week_user(params[:id])
-    render json: @users, status: :ok, include: @include,root: "data"
+    @user = User.orders_week_user(params[:id])
+    render json: @user, status: :ok, include: @include,root: "data"
   end
 
   def orders_month
-    @users = User.orders_month(params[:user][:year].to_i,params[:user][:month].to_i,@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.orders_month(params[:user][:year].to_i,params[:user][:month].to_i,@page,@per_page) : User.orders_month(params[:user][:year].to_i,params[:user][:month].to_i,@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_month_user
-    @users = User.orders_month_user(params[:id],params[:user][:year].to_i,params[:user][:month].to_i)
-    render json: @users, status: :ok, include: @include,root: "data"
+    @user = User.orders_month_user(params[:id],params[:user][:year].to_i,params[:user][:month].to_i)
+    render json: @user, status: :ok, include: @include,root: "data"
   end
 
   def orders_year
-    @users = User.orders_year(params[:user][:year].to_i,@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.orders_year(params[:user][:year].to_i,@page,@per_page) : User.orders_year(params[:user][:year].to_i,@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, include: @include,root: "data",meta: meta_attributes(@users)
   end
 
   def orders_year_user
-    @users = User.orders_year_user(params[:id],params[:user][:year].to_i)
-    render json: @users, status: :ok, include: @include,root: "data"
+    @user = User.orders_year_user(params[:id],params[:user][:year].to_i)
+    render json: @user, status: :ok, include: @include,root: "data"
   end
 
   def users_with_addresses
-    @users = User.users_with_addresses(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.users_with_addresses(@page,@per_page) : User.users_with_addresses(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields,meta: meta_attributes(@users)
   end
 
   def users_with_alergies
-    @users = User.users_with_alergies(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.users_with_alergies(@page,@per_page) : User.users_with_alergies(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields,meta: meta_attributes(@users)
 
   end
 
   def users_with_orders
-    @users = User.users_with_alergies(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.users_with_orders(@page,@per_page) : User.users_with_orders(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields, meta: meta_attributes(@users)
   end
 
   def users_with_favorite_dishes
-    @users = User.users_with_favorite_dishes(@page,@per_page)
+    @users = params.has_key?(:sort) ? User.unscoped.users_with_favorite_dishes(@page,@per_page) : User.users_with_favorite_dishes(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields, meta: meta_attributes(@users)
   end
 
   def users_with_rating_dishes
-    @users = User.users_with_rating_dishes(@page,@per_page)
+    @users = params.has_key?(:sort)? User.unscoped.users_with_rating_dishes(@page,@per_page) : User.users_with_rating_dishes(@page,@per_page)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok,root: "data",each_serializer: SimpleUserSerializer,fields: set_fields, meta: meta_attributes(@users)
   end
 
   def best_seller_users_per_month
-    @users = User.best_seller_users_per_month(params[:user][:year].to_i,params[:user][:month].to_i)
+    @users = params.has_key?(:sort) ? User.unscoped.best_seller_users_per_month(params[:user][:year].to_i,params[:user][:month].to_i) : User.best_seller_users_per_month(params[:user][:year].to_i,params[:user][:month].to_i)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, each_serializer: SimpleUserSerializer,fields: set_fields,root: "data"
   end
 
   def best_seller_users_per_year
-    @users = User.best_seller_users_per_year(params[:user][:year].to_i)
+    @users = params.has_key?(:sort) ? User.unscoped.best_seller_users_per_year(params[:user][:year].to_i) : User.best_seller_users_per_year(params[:user][:year].to_i)
+    @users = set_orders(params,@users)
     render json: @users, status: :ok, each_serializer: SimpleUserSerializer,fields: set_fields,root: "data"
   end
 
@@ -164,6 +180,35 @@ class Api::V1::UsersController < ApplicationController
 
     def set_user
       @user = User.user_by_id(params[:id])
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "email", "-email"
+          query = query.order_by_email(ord)
+        when "username", "-username"
+          query = query.order_by_username(ord)
+        when "name", "-name"
+          query = query.order_by_name(ord)
+        when "lastname", "-lastname"
+          query = query.order_by_lastname(ord)
+        when "birthday", "-birthday"
+          query = query.order_by_birthday(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
     def set_include

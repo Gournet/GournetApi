@@ -5,7 +5,8 @@ class Api::V1::AdminsController < ApplicationController
   before_action :set_admin, only: [:show,:destroy]
 
   def index
-    @admins = Admin.load_admins(@page,@per_page)
+    @admins = params.has_key?(:sort) ? Admin.unscoped.load_admins(@page,@per_page) : Admin.load_admins(@page,@per_page)
+    @admins = set_orders(params,@admins)
     render json: @admins, status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
@@ -37,12 +38,14 @@ class Api::V1::AdminsController < ApplicationController
   end
 
   def admins_by_ids
-    @admins =  Admin.admins_by_ids(params[:admin][:ids],@page,@per_page)
+    @admins =  params.has_key(:sort) ? Admin.unscoped.admins_by_ids(params[:admin][:ids],@page,@per_page) : Admin.admins_by_ids(params[:admin][:ids],@page,@per_page)
+    @admins = set_orders(params,@admins)
     render json: @admins, status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
   def admins_by_not_ids
-    @admins =  Admin.admins_by_not_ids(params[:admin][:ids],@page,@per_page)
+    @admins =  params.has_key?(:sort) ? Admin.unscoped.admins_by_not_ids(params[:admin][:ids],@page,@per_page) : Admin.admins_by_not_ids(params[:admin][:ids],@page,@per_page)
+    @admins = set_orders(params,@admins)
     render json: @admins, status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
@@ -61,7 +64,8 @@ class Api::V1::AdminsController < ApplicationController
   end
 
   def admins_by_search
-    @admins =  Admin.search(params[:admin][:text],@page,@per_page)
+    @admins =  params.has_key?(:sort) ? Admin.unscoped.search(params[:admin][:text],@page,@per_page) : Admin.search(params[:admin][:text],@page,@per_page)
+    @admins = set_orders(params,@admins)
     render json: @admins,status: :ok, root: "data",meta: meta_attributes(@admins)
   end
 
@@ -74,6 +78,33 @@ class Api::V1::AdminsController < ApplicationController
       end
       @page ||= 1
       @per_page ||= 10
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "username", "-username"
+          query = query.order_by_username(ord)
+        when "email", "-email"
+          query = query.order_by_email(ord)
+        when "name", "-name"
+          query = query.order_by_name(ord)
+        when "lastname", "-lastname"
+          query = query.order_by_lastname(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
     def set_admin

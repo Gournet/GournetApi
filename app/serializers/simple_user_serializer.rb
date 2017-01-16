@@ -30,4 +30,5 @@ class SimpleUserSerializer < ActiveModel::Serializer
   def favorite_chef_count
     object.chefs.count
   end
+  
 end

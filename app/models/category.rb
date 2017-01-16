@@ -1,6 +1,8 @@
 class Category < ApplicationRecord
 
   default_scope {order('categories.name ASC')}
+  scope :order_by_name, -> (ord) {order("categories.name #{ord}")}
+  scope :order_by_created_at, -> (ord) {order("categories.created_at #{ord}")}
 
 
   def self.search_name(name,page = 1,per_page = 10)

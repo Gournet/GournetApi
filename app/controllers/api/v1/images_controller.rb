@@ -10,10 +10,11 @@ class Api::V1::ImagesController < ApplicationController
   def index
     @images = nil
     if params.has_key?(:dish_id)
-      @images = Image.images_by_dish_id(params[:dish_id],@page,@per_page)
+      @images = params.has_key?(:sort) ? Image.unscoped.images_by_dish_id(params[:dish_id],@page,@per_page) : Image.images_by_dish_id(params[:dish_id],@page,@per_page)
     else
-      @images = Image.load_images(@page,@per_page)
+      @images = params.has_key?(:sort) ? Image.unscoped.load_images(@page,@per_page) : Image.load_images(@page,@per_page)
     end
+    @images = set_orders(params,@images)
     render json: @images, status: :ok, include: @include,root: "data",meta: meta_attributes(@images)
 
   end
@@ -89,6 +90,27 @@ class Api::V1::ImagesController < ApplicationController
 
     def set_image
       @image =  Image.image_by_id(params[:id])
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "order", "-order"
+          query = query.order_by_order(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
     def set_include

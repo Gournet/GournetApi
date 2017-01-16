@@ -8,7 +8,8 @@ class Api::V1::AlergiesController < ApplicationController
   before_action :set_include
 
   def index
-    @alergies = Alergy.load_alergies(@page,@per_page)
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.load_alergies(@page,@per_page) : Alergy.load_alergies(@page,@per_page)
+    @alergies = set_orders(params,@alergies)
     render json: @alergies,status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
   end
 
@@ -117,37 +118,38 @@ class Api::V1::AlergiesController < ApplicationController
   end
 
   def alergies_by_ids
-    @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
-    if stale?(@alergies,public: true)
-      render json: @alergies, status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
-    end
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.alergies_by_ids(params[:alergy][:ids],@page,@per_page) : Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
+    @alergies = set_orders(params,@alergies)
+    render json: @alergies, status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_by_not_ids
-    @alergies = Alergy.alergies_by_ids(params[:alergy][:ids],@page,@per_page)
-    if stale?(@alergies,public: true)
-      render json: @alergies,status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
-    end
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.alergies_by_not_ids(params[:alergy][:ids],@page,@per_page) : Alergy.alergies_by_not_ids(params[:alergy][:ids],@page,@per_page)
+    @alergies = set_orders(params,@alergies)
+    render json: @alergies,status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_with_users
-    @alergies = Alergy.alergies_with_users(@page,@per_page)
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.alergies_with_users(@page,@per_page) : Alergy.alergies_with_users(@page,@per_page)
+    @alergies = set_orders(params,@alergies)
     render json: @alergies, status: :ok, each_serializer: SimpleAlergySerializer, fields: set_fields, root: "data",meta: meta_attributes(@alergies)
-
   end
 
   def alergies_with_dishes
-    @alergies = Alergy.alergies_with_dishes(@page,@per_page)
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.alergies_with_dishes(@page,@per_page) : Alergy.alergies_with_dishes(@page,@per_page)
+    @alergies = set_orders(params,@alergies)
     render json: @alergies, status: :ok, each_serializer: SimpleAlergySerializer, fields: set_fields,  root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_with_dishes_and_users
-    @alergies = Alergy.alergies_with_dishes_and_users(@page,@per_page)
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.alergies_with_dishes_and_users(@page,@per_page) : Alergy.alergies_with_dishes_and_users(@page,@per_page)
+    @alergies = set_orders(params,@alergies)
     render json: @alergies,status: :ok, each_serializer: SimpleAlergySerializer, fields: set_fields, root: "data",meta: meta_attributes(@alergies)
   end
 
   def alergies_by_search
-    @alergies = Alergy.search_name(params[:alergy][:name],@page,@per_page)
+    @alergies = params.has_key?(:sort) ? Alergy.unscoped.search_name(params[:alergy][:name],@page,@per_page) : Alergy.search_name(params[:alergy][:name],@page,@per_page)
+    @alergies = set_orders(params,@alergies)
     render json: @alergies, status: :ok, include: @include, root: "data",meta: meta_attributes(@alergies)
   end
 
@@ -182,6 +184,28 @@ class Api::V1::AlergiesController < ApplicationController
       end
       array_s
     end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "name", "-name"
+          query = query.order_by_name(ord)
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
+    end
+
     def set_include
       temp = params[:include]
       temp ||= "*"

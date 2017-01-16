@@ -10,12 +10,13 @@ class Api::V1::CommentsController < ApplicationController
   def index
     @comments = nil
     if params.has_key?(:user_id)
-      @comments = Comment.comments_by_user(params[:user_id],@page,@per_page)
+      @comments = params.has_key?(:sort) ? Comment.unscoped.comments_by_user(params[:user_id],@page,@per_page) : Comment.comments_by_user(params[:user_id],@page,@per_page)
     elsif params.has_key?(:dish_id)
-      @comments = Comment.comments_by_dish(params[:dish_id],@page,@per_page)
+      @comments = params.has_key?(:sort) ? Comment.unscoped.comments_by_dish(params[:dish_id],@page,@per_page) : Comment.comments_by_dish(params[:dish_id],@page,@per_page)
     else
-      @comments = Comment.load_comments(@page,@per_page)
+      @comments = params.has_key?(:sort) ?  Comment.unscoped.load_comments(@page,@per_page) : Comment.load_comments(@page,@per_page)
     end
+    @comments = set_orders(params,@comments)
     render json: @comments,status: :ok, include: @include,root: "data",meta: meta_attributes(@comments)
   end
 
@@ -74,7 +75,8 @@ class Api::V1::CommentsController < ApplicationController
   end
 
   def comments_with_votes_by_dish
-    @comments = Comment.comments_with_votes_by_dish(params[:dish_id],@page,@per_page)
+    @comments = params.has_key?(:sort) ? Comment.unscoped.comments_with_votes_by_dish(params[:dish_id],@page,@per_page) : Comment.comments_with_votes_by_dish(params[:dish_id],@page,@per_page)
+    @comments = set_orders(params,@comments)
     render json: @comments,each_serializer: SimpleCommentSerializer, fields: set_fields, status: :ok,root: "data",meta: meta_attributes(@comments)
   end
 
@@ -115,6 +117,25 @@ class Api::V1::CommentsController < ApplicationController
 
     def set_comment
       @comment = Comment.comment_by_id(params[:id])
+    end
+
+    def set_orders(params,query)
+      if params.has_key?(:sort)
+        values = params[:sort].split(",")
+        values.each  do |val|
+          query = set_order(val,query)
+        end
+      end
+      query
+    end
+
+    def set_order(val,query)
+      ord = val[0] == '-' ? "DESC" : "ASC"
+      case val.downcase
+        when "date", "-date"
+          query = query.order_by_created_at(ord)
+      end
+      query
     end
 
     def set_include

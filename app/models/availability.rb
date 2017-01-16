@@ -6,6 +6,10 @@ class Availability < ApplicationRecord
   scope :today, -> { includes(:dish).where('day = ?', Date.today )}
   scope :tomorrow, -> { includes(:dish).where('day = ?',Date.today.tomorrow)}
   scope :available_count, -> {where('count > 0')}
+  scope :order_by_day, -> (ord) {order("availabilities.day #{ord}")}
+  scope :order_by_count, -> (ord) {order("availabilities.count #{ord}")}
+  scope :order_by_end_time, -> (ord) {order("availabilities.end_time #{ord}")}
+  scope :order_by_created_at, -> (ord) {order("availabilities.created_at #{ord}")}
 
   def self.availabilities_by_dish(dish_id,page = 1,per_page = 10)
     includes(dish:[:orders])
