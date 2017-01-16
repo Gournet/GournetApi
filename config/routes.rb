@@ -5,6 +5,11 @@ Rails.application.routes.draw do
       controller :facebook do
         post 'loginFacebook', to: "facebook#create_facebook_account"
       end
+      controller :main do
+        get 'contactUs', to: "main#contact_us"
+        get 'sendEmail', to: "main#send_email"
+        get 'requestChef', to: "main#request_chef"
+      end
       concern :ordered do
         resources :orders, only: [:index] do
           collection do
