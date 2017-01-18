@@ -25,7 +25,7 @@ class Address < ApplicationRecord
     end
 
   def self.addresses_by_user(user_id,page = 1,per_page = 10)
-    includes(orders: [:dish]).where(user_id: user_id)
+    includes(:user,orders: [:dish,:chef]).where(user_id: user_id)
       .paginate(:page => page, :per_page => per_page)
   end
 

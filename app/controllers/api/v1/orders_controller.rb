@@ -1,10 +1,14 @@
 class Api::V1::OrdersController < ApplicationController
   include ControllerUtility
   before_action :authenticate_admin!, only: [:destroy]
-  before_action :set_pagination, only: [:index,:orders_by_ids,:orders_by_not_ids,:orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year,:orders_today_resource,:orders_yesterday_resource,:orders_week_resource,:orders_month_resource,:orders_year_resource,:card,:cash]
+  before_action only: [:index,:orders_by_ids,:orders_by_not_ids,:orders_today,:orders_yesterday,:orders_week,:orders_month,:orders_year,:orders_today_resource,:orders_yesterday_resource,:orders_week_resource,:orders_month_resource,:orders_year_resource,:card,:cash] do
+    set_pagination(params)
+  end
   before_action :set_order, only: [:show]
   before_action :authenticate_user!, only: [:create]
-  before_action :set_include
+  before_action do
+    set_include(params)
+  end
 
   def index
     @orders = nil
@@ -85,13 +89,13 @@ class Api::V1::OrdersController < ApplicationController
   def card
     @orders = params.has_key?(:sort) ? Order.unscoped.card.paginate(:page => @page, :per_page => @per_page) : Order.card.paginate(:page => @page, :per_page => @per_page)
     @orders = set_orders(params,@orders)
-    render json: @orders, status: :ok, each_serializer:AttributesOrderSerializer,status_method: "Success", fields: set_fields, meta: meta_attributes(@orders), root: "data"
+    render json: @orders, status: :ok, each_serializer:AttributesOrderSerializer,status_method: "Success", fields: set_fields(params), meta: meta_attributes(@orders), root: "data"
   end
 
   def cash
     @orders = params.has_key?(:sort) ? Order.unscoped.cash.paginate(:page => @page ,:per_page => @per_page) : Order.cash.paginate(:page => @page ,:per_page => @per_page)
     @orders = set_orders(params,@orders)
-    render json: @orders, status: :ok,each_serializer: AttributesOrderSerializer,status_method: "Success", fields: set_fields, meta: meta_attributes(@orders), root: "data"
+    render json: @orders, status: :ok,each_serializer: AttributesOrderSerializer,status_method: "Success", fields: set_fields(params), meta: meta_attributes(@orders), root: "data"
   end
 
   def orders_by_ids
@@ -202,14 +206,6 @@ class Api::V1::OrdersController < ApplicationController
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
 
     def set_order
       @order = Order.order_by_id(params[:id])
@@ -218,29 +214,6 @@ class Api::V1::OrdersController < ApplicationController
     def order_params
       params.require(:order).permit(:count,:price,:comment,:day,:estimated_time,:payment_type)
       params.require(:relationship).permit(:address_id,:chef_id,:dish_id)
-    end
-
-    def set_fields
-      array = params[:fields].split(",") if params.has_key?(:fields)
-      array ||= []
-      array_s = nil
-      if !array.empty?
-        array_s = []
-      end
-      array.each do |a|
-        array_s.push(a.to_sym)
-      end
-      array_s
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -258,16 +231,6 @@ class Api::V1::OrdersController < ApplicationController
           query = query.order_by_created_at(ord)
       end
       query
-    end
-
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
     end
 
 end

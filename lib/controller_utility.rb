@@ -5,7 +5,7 @@ module ControllerUtility
         status: "Error",
         error: "We can't find the record"
       }
-    },status: :not_found
+    },status: :gone
   end
 
   def record_error
@@ -14,6 +14,65 @@ module ControllerUtility
         error: "We can't delete the record"
       }
     }, status: :internal_server_error
+  end
+
+  def set_pagination(params)
+    if params.has_key?(:page)
+      @page = params[:page].has_key?(:number) ? params[:page][:number].to_i : 1
+      @per_page = params[:page].has_key?(:size) ?  params[:page][:size].to_i : 10
+    end
+    @page ||= 1
+    @per_page ||= 10
+  end
+
+  def set_orders(params,query)
+    if params.has_key?(:sort)
+      values = params[:sort].split(",")
+      values.each  do |val|
+        query = set_order(val,query)
+      end
+    end
+    query
+  end
+
+  def set_include(params)
+    temp = params[:include]
+    temp ||= "*"
+    if temp.include? "**"
+      temp = "*"
+    end
+    @include = temp
+  end
+
+  def record_add_rating
+    render json: { data: {
+        status: "Error",
+        error: "You need first to order this dish, if you want to vote"
+      }
+    }, status: :forbidden
+  end
+
+  def can_operation
+    render json: { data: {
+        status: "Success"
+      }
+    }, status: :ok
+  end
+
+  def cannot_operation
+    render json: { data: {
+        status: "Error",
+        error: "You need first to order this dish, if you want to vote"
+      }
+    }, status: :forbidden
+  end
+
+  def record_add_comment
+    render json: { data: {
+        status: "Error",
+        error: "You need first to order this dish, if you want to vote"
+      }
+    }, status: :forbidden
   end
 
   def operation_not_allowed
@@ -29,9 +88,9 @@ module ControllerUtility
     render json: { data: {
         status: "Error",
         errors: ["We can't create the order",
-        "The address doen't correspond to the user"]
+        "The address doesn't correspond to the user"]
       }
-    },status: :unauthorized
+    },status: :forbidden
   end
 
   def order_quantity_errors
@@ -40,7 +99,7 @@ module ControllerUtility
         errors: ["We can't create the order",
         "The requested quantity is bigger than the available for the day"]
       }
-    },status: :unauthorized
+    },status: :forbidden
   end
 
   def order_dish_errors
@@ -49,7 +108,7 @@ module ControllerUtility
         errors: ["We can't create the order",
         "The dish doesn't correspond to the chef"]
       }
-    },status: :unauthorized
+    },status: :forbidden
   end
 
   def record_errors(record)
@@ -63,6 +122,20 @@ module ControllerUtility
   def record_success
     head :no_content
   end
+
+  def set_fields(params)
+    array = params[:fields].split(",") if params.has_key?(:fields)
+    array ||= []
+    array_s = nil
+    if !array.empty?
+      array_s = []
+    end
+    array.each do |a|
+      array_s.push(a.to_sym)
+    end
+    array_s
+  end
+
   def meta_attributes(resource, extra_meta = {})
     {
       current_page: resource.current_page,

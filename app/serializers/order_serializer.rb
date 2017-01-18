@@ -5,7 +5,7 @@ class OrderSerializer < ActiveModel::Serializer
   belongs_to :address
   belongs_to :user
   belongs_to :dish
-  belongs_to :user
+  belongs_to :chef
 
   def type
     "order"

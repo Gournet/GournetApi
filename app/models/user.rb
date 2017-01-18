@@ -114,7 +114,7 @@ class User < ActiveRecord::Base
   def self.users_with_orders(page = 1, per_page = 10)
     joins(:orders).select("users.*")
       .group("users.id")
-      .paginate(:page => page, per_page => per_page)
+      .paginate(:page => page, :per_page => per_page)
       .reorder("COUNT(orders.id) DESC")
   end
 
@@ -218,12 +218,11 @@ class User < ActiveRecord::Base
   end
 
   def self.query_orders(date,page,per_page)
-    includes(:comments,:addresses,:alergies,:dishes,:r_dishes,:c_dishes,:v_comments,:chefs,orders: [:dish,:chef,:address])
+    joins(:orders)
       .where(orders: { day: date } )
       .group("users.id")
       .paginate(:page => page, :per_page => per_page)
       .reorder("COUNT(orders.id) DESC")
-      .references(:orders)
   end
 
   def self.query_orders_user(user,date)

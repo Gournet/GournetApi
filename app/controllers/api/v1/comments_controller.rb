@@ -4,8 +4,12 @@ class Api::V1::CommentsController < ApplicationController
   devise_token_auth_group :member, contains: [:user, :admin]
   before_action :authenticate_member!, only: [:destroy]
   before_action :set_comment, only: [:show,:update,:destroy]
-  before_action :set_pagination, only: [:index,:comments_by_dish,:comments_by_user,:comments_with_votes_by_dish]
-  before_action :set_include
+  before_action only: [:index,:comments_by_dish,:comments_by_user,:comments_with_votes_by_dish] do
+    set_pagination(params)
+  end
+  before_action do
+    set_include(params)
+  end
 
   def index
     @comments = nil
@@ -33,11 +37,21 @@ class Api::V1::CommentsController < ApplicationController
   def create
     @comment = Comment.new(comment_params)
     @comment.user_id =  current_user.id
-    @comment.dish_id =  params[:dish_id]
-    if @comment.save
-      render json: @comment, status: :created, status_method: "Created", serializer: AttributesCommentSerializer, :location => api_v1_comment_path(@comment),root: "data"
+    dish = Dish.dish_by_id(params[:dish_id])
+    if dish
+      @order = Order.where(dish_id: dish.id).where(user_id: current_user.id).first
+      if @order || @order.day > Date.today
+        @comment.dish_id =  dish.id
+        if @comment.save
+          render json: @comment, status: :created, status_method: "Created", serializer: AttributesCommentSerializer, :location => api_v1_comment_path(@comment),root: "data"
+        else
+          record_errors(@comment)
+        end
+      else
+        record_add_comment
+      end
     else
-      record_errors(@comment)
+      record_not_found
     end
   end
 
@@ -77,7 +91,7 @@ class Api::V1::CommentsController < ApplicationController
   def comments_with_votes_by_dish
     @comments = params.has_key?(:sort) ? Comment.unscoped.comments_with_votes_by_dish(params[:dish_id],@page,@per_page) : Comment.comments_with_votes_by_dish(params[:dish_id],@page,@per_page)
     @comments = set_orders(params,@comments)
-    render json: @comments,each_serializer: SimpleCommentSerializer, fields: set_fields, status: :ok,root: "data",meta: meta_attributes(@comments)
+    render json: @comments,each_serializer: SimpleCommentSerializer, fields: set_fields(params), status: :ok,root: "data",meta: meta_attributes(@comments)
   end
 
   def add_vote
@@ -89,44 +103,13 @@ class Api::V1::CommentsController < ApplicationController
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
 
     def comment_params
       params.require(:comment).permit(:description)
     end
 
-    def set_fields
-      array = params[:fields].split(",") if params.has_key?(:fields)
-      array ||= []
-      array_s = nil
-      if !array.empty?
-        array_s = []
-      end
-      array.each do |a|
-        array_s.push(a.to_sym)
-      end
-      array_s
-    end
-
     def set_comment
       @comment = Comment.comment_by_id(params[:id])
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -137,15 +120,5 @@ class Api::V1::CommentsController < ApplicationController
       end
       query
     end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
-    end
-
 
 end

@@ -1,5 +1,5 @@
 class AdminSerializer < ActiveModel::Serializer
-  attributes :id,:name,:lastname,:username,:email,:mobile,:avatar,:provider,:uid,:type_chef,:speciality,:expertise
+  attributes :id,:name,:lastname,:username,:email,:mobile,:avatar,:provider,:uid
   attribute :type
 
   def type

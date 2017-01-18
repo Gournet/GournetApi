@@ -3,11 +3,15 @@ class Api::V1::DishesController < ApplicationController
   before_action :authenticate_chef!, only: [:create,:update]
   devise_token_auth_group :member, contains: [:chef, :admin]
   before_action :authenticate_member!, only: [:destroy]
-  before_action :authenticate_user!, only: [:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
-  before_action :set_dish, only: [:show,:destroy,:update,:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
-  before_action :set_pagination, only: [:index,:dishes_by_ids,:dishes_by_not_ids,:popular_dishes_by_rating_grather_than,:dishes_with_rating,:dishes_with_comments,:dishes_with_rating_and_comments,
-  :dishes_with_orders,:dishes_with_orders_today,:dishes_with_orders_yesterday,:dishes_with_orders_week,:dishes_with_orders_month,:dishes_with_orders_year]
-  before_action :set_include
+  before_action :authenticate_user!, only: [:can_make_operation,:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
+  before_action :set_dish, only: [:can_make_operation,:show,:destroy,:update,:add_favorite_dish,:remove_favorite_dish,:add_rating_dish,:remove_rating_dish]
+  before_action only: [:index,:dishes_by_ids,:dishes_by_not_ids,:popular_dishes_by_rating_grather_than,:dishes_with_rating,:dishes_with_comments,:dishes_with_rating_and_comments,
+  :dishes_with_orders,:dishes_with_orders_today,:dishes_with_orders_yesterday,:dishes_with_orders_week,:dishes_with_orders_month,:dishes_with_orders_year] do
+    set_pagination(params)
+  end
+  before_action do
+    set_include(params)
+  end
 
   def index
     @dishes = nil
@@ -94,31 +98,31 @@ class Api::V1::DishesController < ApplicationController
   def dishes_with_rating
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_with_rating(@page,@per_page) : Dish.dishes_with_rating(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields(params),root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_comments
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_with_comments(@page,@per_page) : Dish.dishes_with_comments(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields, root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields(params), root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_rating_and_comments
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dihses_with_rating_and_comments(@page,@per_page) : Dish.dihses_with_rating_and_comments(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields, root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, each_serializer: SimpleDishSerializer, fields: set_fields(params), root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_with_orders
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_with_orders(@page,@per_page) : Dish.dishes_with_orders(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok,each_serializer: SimpleDishSerializer, fields: set_fields, root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes,status: :ok,each_serializer: SimpleDishSerializer, fields: set_fields(params), root: "data",meta: meta_attributes(@dishes)
   end
 
   def dishes_by_orders_today
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_by_orders_today(@page,@per_page) : Dish.dishes_by_orders_today(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes,status: :ok, fields: set_fields(params), each_serializer: SimpleDishSerializer,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_today
@@ -129,7 +133,7 @@ class Api::V1::DishesController < ApplicationController
   def dishes_by_orders_yesterday
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_by_orders_yesterday(@page,@per_page) : Dish.dishes_by_orders_yesterday(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes,status: :ok, fields: set_fields(params), each_serializer: SimpleDishSerializer,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_yesterday
@@ -140,7 +144,7 @@ class Api::V1::DishesController < ApplicationController
   def dishes_by_orders_week
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_by_orders_week(@page,@per_page) : Dish.dishes_by_orders_week(@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes,status: :ok, fields: set_fields(params), each_serializer: SimpleDishSerializer,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_week
@@ -151,7 +155,7 @@ class Api::V1::DishesController < ApplicationController
   def dishes_by_orders_month
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_by_orders_month(params[:dish][:year].to_i,params[:dish][:month].to_i,@page,@per_page) : Dish.dishes_by_orders_month(params[:dish][:year].to_i,params[:dish][:month].to_i,@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes,status: :ok, fields: set_fields(params), each_serializer: SimpleDishSerializer,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_month
@@ -162,7 +166,7 @@ class Api::V1::DishesController < ApplicationController
   def dishes_by_orders_year
     @dishes = params.has_key?(:sort) ? Dish.unscoped.dishes_by_orders_year(params[:dish][:year].to_i,@page,@per_page) : Dish.dishes_by_orders_year(params[:dish][:year].to_i,@page,@per_page)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes, status: :ok, include: @include,root: "data",meta: meta_attributes(@dishes)
+    render json: @dishes, status: :ok, fields: set_fields(params), each_serializer: SimpleDishSerializer,root: "data",meta: meta_attributes(@dishes)
   end
 
   def orders_year
@@ -174,13 +178,13 @@ class Api::V1::DishesController < ApplicationController
   def best_seller_dishes_per_month
     @dishes = params.has_key?(:sort) ? Dish.unscoped.best_seller_dishes_per_month(params[:dish][:year].to_i,params[:dish][:month].to_i) : Dish.best_seller_dishes_per_month(params[:dish][:year].to_i,params[:dish][:month].to_i)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok,root: "data",each_serializer: SimpleDishSerializer, fields: set_fields
+    render json: @dishes,status: :ok,root: "data",each_serializer: SimpleDishSerializer, fields: set_fields(params)
   end
 
   def best_seller_dishes_per_year
     @dishes = params.has_key?(:sort) ? Dish.unscoped.best_seller_dishes_per_year(params[:dish][:year].to_i) : Dish.best_seller_dishes_per_year(params[:dish][:year].to_i)
     @dishes = set_orders(params,@dishes)
-    render json: @dishes,status: :ok,root: "data",each_serializer: SimpleDishSerializer, fields: set_fields
+    render json: @dishes,status: :ok,root: "data",each_serializer: SimpleDishSerializer, fields: set_fields(params)
   end
 
   def add_favorite_dish
@@ -196,12 +200,30 @@ class Api::V1::DishesController < ApplicationController
     end
   end
 
+  def can_make_operation
+    if @dish
+      @order = Order.where(dish_id: @dish.id).where(user_id: current_user.id).first
+      if @order || @order.day > Date.today
+        can_operation
+      else
+        cannot_operation
+      end
+    else
+      record_not_found
+    end
+  end
+
   def add_rating_dish
     if @dish
-      if rating = RatingDish.add_rating(current_user.id,@dish.id,params[:dish][:rating])
-        record_success
+      @order = Order.where(dish_id: @dish.id).where(user_id: current_user.id).first
+      if @order || @order.day > Date.today
+        if rating = RatingDish.add_rating(current_user.id,@dish.id,params[:dish][:rating])
+          record_success
+        else
+          record_error
+        end
       else
-        record_error
+        record_add_rating
       end
     else
       record_not_found
@@ -243,14 +265,6 @@ class Api::V1::DishesController < ApplicationController
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
 
     def set_dish
       @dish = Dish.dish_by_id(params[:id])
@@ -258,29 +272,6 @@ class Api::V1::DishesController < ApplicationController
 
     def dish_params
       params.require(:dish).permit(:name,:description,:price,:cooking_time,:calories)
-    end
-
-    def set_fields
-      array = params[:fields].split(",") if params.has_key?(:fields)
-      array ||= []
-      array_s = nil
-      if !array.empty?
-        array_s = []
-      end
-      array.each do |a|
-        array_s.push(a.to_sym)
-      end
-      array_s
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -301,15 +292,5 @@ class Api::V1::DishesController < ApplicationController
       end
       query
     end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
-    end
-
 
 end

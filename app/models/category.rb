@@ -2,8 +2,7 @@ class Category < ApplicationRecord
 
   default_scope {order('categories.name ASC')}
   scope :order_by_name, -> (ord) {order("categories.name #{ord}")}
-  scope :order_by_created_at, -> (ord) {order("categories.created_at #{ord}")}
-
+  scope :order_by_created_at, -> (ord) {order("categories.created_at #{ord}")}
 
   def self.search_name(name,page = 1,per_page = 10)
     includes(dishes: [:orders]).where("name LIKE ?","#{name.downcase}%")
@@ -12,6 +11,12 @@ class Category < ApplicationRecord
 
   def self.category_by_id(id)
     includes(dishes: [:orders]).find_by_id(id)
+  end
+
+  def self.categories_by_dish(dish, page = 1, per_page = 10)
+    joins(:category_by_dishes)
+      .where(category_by_dishes: {dish_id: dish})
+      .paginate(:page => page, :per_page => per_page)
   end
 
   def self.categories_by_ids(ids,page,per_page)

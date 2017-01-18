@@ -2,8 +2,12 @@ class Api::V1::AvailabilitiesController < ApplicationController
   include ControllerUtility
   before_action :authenticate_chef!, only: [:create,:update,:destroy]
   before_action :set_availability, only: [:update,:destroy]
-  before_action :set_pagination, only: [:index,:today,:tomorrow,:next_seven_days,:tomorrow_with_count,:today_with_count,:availabilities_by_dish]
-  before_action :set_include
+  before_action only: [:index,:today,:tomorrow,:next_seven_days,:tomorrow_with_count,:today_with_count,:availabilities_by_dish] do
+    set_pagination(params)
+  end
+  before_action do
+    set_include(params)
+  end
 
   def index
     @availabilities = nil
@@ -28,25 +32,47 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
   def create
     @availability = Availability.new(availability_params)
-    @availability.dish_id = params[:dish_id]
-    if @availability.save()
-      render json: @availability, status: :created, serializer: AttributesAvailabilitySerializer, status_method: "Created",  :location => api_v1_availability_path(@availability), root: "data"
+    dish = Dish.dish_by_id(params[:dish_id])
+    if dish
+      if dish.chef.id ==  current_chef.id
+        @availability.dish_id = params[:dish_id]
+        if @availability.save()
+          date = Date.parse(params[:availability][:day]) + 7.days
+          availability = Availability.new(
+            day: date,
+            count: params[:availability][:count],
+            repeat: params[:availability][:repeat],
+            available: params[:availability][:available],
+            end_time: params[:availability][:end_time]
+          )
+          availability.save
+          render json: @availability, status: :created, serializer: AttributesAvailabilitySerializer, status_method: "Created",  :location => api_v1_availability_path(@availability), root: "data"
+        else
+          record_errors(@availabilty)
+        end
+      else
+        operation_not_allowed
+      end
     else
-      record_errors(@availabilty)
+      record_not_found
     end
   end
 
   def update
     if @availability
-      chef = Dish.dish_by_id(params[:dish_id]).chef.id
-      if chef == current_chef.id
-        if @availability.update(availability_params)
-          render json: @availability, status: :ok, serializer: AttributesAvailabilitySerializer, status_method: "Updated", root: "data"
+      dish = Dish.dish_by_id(params[:dish_id])
+      if dish
+        if dish.chef.id == current_chef.id
+          if @availability.update(availability_params)
+            render json: @availability, status: :ok, serializer: AttributesAvailabilitySerializer, status_method: "Updated", root: "data"
+          else
+            record_errors(@availability)
+          end
         else
-          record_errors(@availability)
+          operation_not_allowed
         end
       else
-        operation_not_allowed
+        record_not_found
       end
     else
       record_not_found
@@ -56,21 +82,24 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
   def destroy
     if @availability
-      chef = Dish.dish_by_id(params[:dish_id]).chef.id
-      if chef == current_chef.id
-        @availability.destroy
-        if @availability.destroyed?
-          record_success
+      dish = Dish.dish_by_id(params[:dish_id])
+      if dish
+        if dish.chef.id == current_chef.id
+          @availability.destroy
+          if @availability.destroyed?
+            record_success
+          else
+            record_error
+          end
         else
-          record_error
+          operation_not_allowed
         end
       else
-        operation_not_allowed
+        record_not_found
       end
     else
       record_not_found
     end
-
   end
 
   def today
@@ -104,14 +133,6 @@ class Api::V1::AvailabilitiesController < ApplicationController
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
 
     def set_availability
       @availability = Availability.availability_by_id(params[:id])
@@ -119,16 +140,6 @@ class Api::V1::AvailabilitiesController < ApplicationController
 
     def availability_params
       params.require(:availability).permit(:day,:count,:available,:end_time,:repeat)
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -145,15 +156,5 @@ class Api::V1::AvailabilitiesController < ApplicationController
       end
       query
     end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
-    end
-
 
 end
