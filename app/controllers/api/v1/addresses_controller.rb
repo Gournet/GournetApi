@@ -3,9 +3,13 @@ class Api::V1::AddressesController < ApplicationController
   before_action :authenticate_user!, only: [:create,:update]
   devise_token_auth_group :member, contains: [:user, :admin]
   before_action :authenticate_member!, only: [:destroy]
-  before_action :set_pagination, only: [:index,:popular_addresses,:find_adddress_by_lat_and_lng,:addresses_with_orders]
+  before_action only: [:index,:popular_addresses,:find_adddress_by_lat_and_lng,:addresses_with_orders] do
+    set_pagination(params)
+  end
   before_action :set_address, only: [:show,:update,:destroy]
-  before_action :set_include
+  before_action  do
+    set_include(params)
+  end
 
   def index
     if params.has_key?(:user_id)
@@ -73,7 +77,7 @@ class Api::V1::AddressesController < ApplicationController
   def popular_addresses
     @addresses = params.has_key?(:sort) ? Address.unscoped.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page) : Address.popular_addresses_by_orders_and_user(params[:user_id],@page,@per_page)
     @addresses = set_orders(params,@addresses)
-    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields, root: "data",meta: meta_attributes(@addresses)
+    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields(params), root: "data",meta: meta_attributes(@addresses)
   end
 
   def find_adddress_by_lat_and_lng
@@ -85,18 +89,10 @@ class Api::V1::AddressesController < ApplicationController
   def addresses_with_orders
     @addresses =  params.has_key?(:sort) ? Address.unscoped.addresses_with_orders(@page,@per_page) : Address.addresses_with_orders(@page,@per_page)
     @addresses = set_orders(params,@addresses)
-    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields, root: "data",meta: meta_attributes(@addresses)
+    render json: @addresses, status: :ok, each_serializer: SimpleAddressSerializer, fields: set_fields(params), root: "data",meta: meta_attributes(@addresses)
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
 
     def set_address
       @address = Address.address_by_id(params[:id])
@@ -104,38 +100,6 @@ class Api::V1::AddressesController < ApplicationController
 
     def address_params
       params.require(:address).permit(:address,:lat,:lng)
-    end
-
-    def set_fields
-      array = params[:fields].split(",") if params.has_key?(:fields)
-      array ||= []
-      array_s = nil
-      if !array.empty?
-        array_s = []
-      end
-      array.each do |a|
-        array_s.push(a.to_sym)
-      end
-      array_s
-    end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)

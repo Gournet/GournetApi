@@ -4,8 +4,12 @@ class Api::V1::ImagesController < ApplicationController
   devise_token_auth_group :member, contains: [:chef, :admin]
   before_action :authenticate_member!, only: [:destroy]
   before_action :set_image, only: [:show,:update,:destroy]
-  before_action :set_pagination, only: [:index]
-  before_action :set_include
+  before_action only: [:index] do
+    set_pagination(params)
+  end
+  before_action do
+    set_include(params)
+  end
 
   def index
     @images = nil
@@ -75,14 +79,6 @@ class Api::V1::ImagesController < ApplicationController
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
 
     def image_params
       params.require(:image).permit(:image,:order,:description)
@@ -90,16 +86,6 @@ class Api::V1::ImagesController < ApplicationController
 
     def set_image
       @image =  Image.image_by_id(params[:id])
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -111,15 +97,6 @@ class Api::V1::ImagesController < ApplicationController
           query = query.order_by_created_at(ord)
       end
       query
-    end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
     end
 
 end

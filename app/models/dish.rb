@@ -164,7 +164,7 @@ class Dish < ApplicationRecord
     end
 
     def self.query_orders(date,page,per_page)
-      includes(:images,:chef,:categories,:alergies,:users,:comments,:comment_users,:rating_users,:availabilities,orders: [:user,:chef,:address])
+      joins(:orders)
         .where(orders: { day: date})
         .group("dishes.id")
         .paginate(:page => page, :per_page => per_page)

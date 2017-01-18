@@ -28,6 +28,18 @@ class Alergy < ApplicationRecord
         .paginate(:page => page, :per_page => per_page)
     end
 
+    def self.alergies_by_dish(dish,page = 1, per_page = 10)
+      alergies = joins(:alergy_by_dishes)
+        .where(alergy_by_dishes: {dish_id: dish})
+        .paginate(:page => page, :per_page => per_page)
+    end
+
+    def self.alergies_by_user(user,page = 1, per_page = 10)
+      joins(:alergy_by_users)
+        .where(alergy_by_users: {user_id: user})
+        .paginate(:page => page, :per_page => per_page)
+    end
+
     def self.alergies_with_users(page = 1,per_page = 10)
       joins(:alergy_by_users).select("alergies.*")
         .group("alergies.id")

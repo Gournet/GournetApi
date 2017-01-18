@@ -5,6 +5,11 @@ Rails.application.routes.draw do
       controller :facebook do
         post 'loginFacebook', to: "facebook#create_facebook_account"
       end
+      controller :main do
+        get 'contactUs', to: "main#contact_us"
+        get 'sendEmail', to: "main#send_email"
+        get 'requestChef', to: "main#request_chef"
+      end
       concern :ordered do
         resources :orders, only: [:index] do
           collection do
@@ -56,6 +61,7 @@ Rails.application.routes.draw do
           end
         end
         resources :comments, only: [:show,:index]
+        resources :alergies, only: [:index]
       end
 
       resources :admins, :only => [:index,:show,:destroy] do
@@ -130,6 +136,7 @@ Rails.application.routes.draw do
           match 'removeRating', to: "dishes#remove_rating_dish", via: [:delete]
           match 'addFavorite', to: "dishes#add_favorite_dish", via: [:post,:put,:patch]
           match 'removeFavorite', to: "dishes#remove_favorite_dish", via: [:delete]
+          get 'canMakeOperation', to: "dishes#can_make_operation"
           get 'ordersToday', to: "dishes#orders_today"
           get 'ordersYesterday', to: "dishes#orders_yesterday"
           get 'ordersWeek', to: "dishes#orders_week"
@@ -143,13 +150,13 @@ Rails.application.routes.draw do
           end
         end
         resources :images
-        resources :alergies, only: [:create] do
+        resources :alergies, only: [:index,:create] do
           collection do
             post 'addAlergiesDish', to: "alergies#add_alergies_dish"
             delete 'removeAlergiesDish', to: "alergies#remove_alergies_dish"
           end
         end
-        resources :categories, only: [:create] do
+        resources :categories, only: [:index,:create] do
           collection do
             post 'addCategoriesDish', to: "categories#add_categories_dish"
             delete 'removeCategoriesDish', to: "categories#remove_categories_dish"

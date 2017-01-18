@@ -1,12 +1,16 @@
 class Api::V1::ChefsController < ApplicationController
   include ControllerUtility
-  before_action :set_pagination, only: [:index,:chefs_by_ids,:chefs_by_not_ids,:chefs_with_dishes,
+  before_action only: [:index,:chefs_by_ids,:chefs_by_not_ids,:chefs_with_dishes,
     :chefs_with_followers,:chefs_with_orders,:chefs_with_orders_today,:chefs_with_orders_yesterday,
-    :chefs_with_orders_week,:chefs_with_orders_month,:chefs_with_orders_year,:professional,:amateur,:catering_specialist,:cooking_student,:other]
+    :chefs_with_orders_week,:chefs_with_orders_month,:chefs_with_orders_year,:professional,:amateur,:catering_specialist,:cooking_student,:other] do
+      set_pagination(params)
+    end
   before_action :set_chef, only: [:show,:destroy,:follow,:unfollow]
   before_action :authenticate_admin!, only: [:destroy]
   before_action :authenticate_user!, only: [:follow,:unfollow]
-  before_action :set_include
+  before_action do
+    set_include(params)
+  end
 
   def index
     @chefs = params.has_key?(:sort)? Chef.unscoped.load_chefs(@page,@per_page) : Chef.load_chefs(@page,@per_page)
@@ -40,31 +44,31 @@ class Api::V1::ChefsController < ApplicationController
   def professional
     @chefs = params.has_key?(:sort) ? Chef.unscoped.profesional.paginate(:page => @page, :per_page => @per_page) : Chef.profesional.paginate(:page => @page, :per_page => @per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def amateur
     @chefs = params.has_key?(:sort) ? Chef.unscoped.amateur.paginate(:page => @page, :per_page => @per_page)  : Chef.amateur.paginate(:page => @page, :per_page => @per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def catering_specialist
     @chefs = params.has_key?(:sort) ? Chef.unscoped.especializado_en_catering.paginate(:page => @page, :per_page => @per_page) : Chef.especializado_en_catering.paginate(:page => @page, :per_page => @per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def cooking_student
     @chefs = params.has_key?(:sort) ? Chef.unscoped.estudiante_de_cocina.paginate(:page => @page,:per_page => @per_page) : Chef.estudiante_de_cocina.paginate(:page => @page,:per_page => @per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def other
     @chefs = params.has_key?(:sort) ? Chef.unscoped.otro.paginate(:page => @page, :per_page => @per_page) : Chef.otro.paginate(:page => @page, :per_page => @per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data",meta: meta_attributes(@chefs), fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def chefs_by_ids
@@ -82,25 +86,25 @@ class Api::V1::ChefsController < ApplicationController
   def chefs_with_dishes
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_dishes(@page,@per_page) : Chef.chefs_with_dishes(@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs,status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer,meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, root: "data", fields: set_fields(params), each_serializer: SimpleChefSerializer,meta: meta_attributes(@chefs)
   end
 
   def chefs_with_followers
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_followers(@page, @per_page) : Chef.chefs_with_followers(@page, @per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs,status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer,meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, root: "data", fields: set_fields(params), each_serializer: SimpleChefSerializer,meta: meta_attributes(@chefs)
   end
 
   def chefs_with_orders
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_orders(@page,@per_page) : Chef.chefs_with_orders(@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data",fields: set_fields, each_serializer: SimpleChefSerializer, meta: meta_attributes(@chefs)
+    render json: @chefs, status: :ok, root: "data",fields: set_fields(params), each_serializer: SimpleChefSerializer, meta: meta_attributes(@chefs)
   end
 
   def chefs_with_orders_today
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_orders_today(@page,@per_page) : Chef.chefs_with_orders_today(@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, fields: set_fields(params), each_serializer: SimpleChefSerializer, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_today
@@ -111,7 +115,7 @@ class Api::V1::ChefsController < ApplicationController
   def chefs_with_orders_yesterday
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_orders_yesterday(@page,@per_page) : Chef.chefs_with_orders_yesterday(@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, fields: set_fields(params), each_serializer: SimpleChefSerializer, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_yesterday
@@ -122,7 +126,7 @@ class Api::V1::ChefsController < ApplicationController
   def chefs_with_orders_week
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_orders_week(@page,@per_page) : Chef.chefs_with_orders_week(@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, fields: set_fields(params), each_serializer: SimpleChefSerializer, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_week
@@ -133,7 +137,7 @@ class Api::V1::ChefsController < ApplicationController
   def chefs_with_orders_month
     @chefs = params.has_key?(:sort) ? Chef.unscoped.chefs_with_orders_month(params[:chef][:year].to_i,params[:chef][:month].to_i,@page,@per_page) : Chef.chefs_with_orders_month(params[:chef][:year].to_i,params[:chef][:month].to_i,@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
+    render json: @chefs,status: :ok, fields: set_fields(params), each_serializer: SimpleChefSerializer, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_month
@@ -144,7 +148,7 @@ class Api::V1::ChefsController < ApplicationController
   def chefs_with_orders_year
     @chef = params.has_key?(:sort) ? Chef.unscoped.chefs_with_orders_year(params[:chef][:year].to_i,@page,@per_page) : Chef.chefs_with_orders_year(params[:chef][:year].to_i,@page,@per_page)
     @chefs = set_orders(params,@chefs)
-    render json: @chef,status: :ok, include: @include, root: "data",meta: meta_attributes(@chefs)
+    render json: @chef,status: :ok, fields: set_fields(params), each_serializer: SimpleChefSerializer, root: "data",meta: meta_attributes(@chefs)
   end
 
   def orders_year
@@ -155,13 +159,13 @@ class Api::V1::ChefsController < ApplicationController
   def best_seller_chefs_per_month
     @chefs = params.has_key?(:sort) ? Chef.unscoped.best_seller_chefs_per_month(params[:chef][:year].to_i,params[:chef][:month].to_i) : Chef.best_seller_chefs_per_month(params[:chef][:year].to_i,params[:chef][:month].to_i)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data", fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def best_seller_chefs_per_year
     @chefs = params.has_key?(:sort) ? Chef.unscoped.best_seller_chefs_per_year(params[:chef][:year].to_i) : Chef.best_seller_chefs_per_year(params[:chef][:year].to_i)
     @chefs = set_orders(params,@chefs)
-    render json: @chefs, status: :ok, root: "data", fields: set_fields, each_serializer: SimpleChefSerializer
+    render json: @chefs, status: :ok, root: "data", fields: set_fields(params), each_serializer: SimpleChefSerializer
   end
 
   def follow
@@ -194,40 +198,9 @@ class Api::V1::ChefsController < ApplicationController
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
-
-    def set_fields
-      array = params[:fields].split(",") if params.has_key?(:fields)
-      array ||= []
-      array_s = nil
-      if !array.empty?
-        array_s = []
-      end
-      array.each do |a|
-        array_s.push(a.to_sym)
-      end
-      array_s
-    end
 
     def set_chef
       @chef = Chef.chef_by_id(params[:id])
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -248,15 +221,5 @@ class Api::V1::ChefsController < ApplicationController
       end
       query
     end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
-    end
-
 
 end

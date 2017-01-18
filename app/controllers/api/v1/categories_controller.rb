@@ -3,13 +3,26 @@ class Api::V1::CategoriesController < ApplicationController
   before_action :authenticate_admin!, only: [:create,:update,:destroy]
   before_action :authenticate_chef!, only: [:add_categories_dish,:remove_categories_dish]
   before_action :set_category, only: [:show,:update,:destroy]
-  before_action :set_pagination, only: [:index,:categories_by_ids,:categories_by_not_ids,:categories_with_dishes,:categories_by_search]
-  before_action :set_include
+  before_action only: [:index,:categories_by_ids,:categories_by_not_ids,:categories_with_dishes,:categories_by_search] do
+    set_pagination(params)
+  end
+  before_action do
+    set_include(params)
+  end
 
   def index
-    @categories = params.has_key?(:sort) ? Category.unscoped.load_categories(@page,@per_page) : Category.load_categories(@page,@per_page)
+    @categories = nil
+    if params.has_key?(:dish_id)
+      @categories = params.has_key?(:sort) ? Category.unscoped.categories_by_dish(params[:dish_id],@page,@per_page) : Category.categories_by_dish(params[:dish_id],@page,@per_page)
+    else
+      @categories = params.has_key?(:sort) ? Category.unscoped.load_categories(@page,@per_page) : Category.load_categories(@page,@per_page)
+    end
     @categories = set_orders(params,@categories)
-    render json: @categories, status: :ok, include: @include, root: "data",meta: meta_attributes(@categories)
+    if params.has_key?(:dish_id)
+      render json: @categories, status: :ok, fields: set_fields, each_serailizer: SimpleCategorySerializer, root: "data",meta: meta_attributes(@categories)
+    else
+      render json: @categories, status: :ok, include: @include, root: "data",meta: meta_attributes(@categories)
+    end
   end
 
   def show
@@ -117,31 +130,10 @@ class Api::V1::CategoriesController < ApplicationController
   def categories_by_search
     @categories = params.has_key?(:sort) ? Category.unscoped.search_name(params[:category][:name],@page,@per_page) : Category.search_name(params[:category][:name],@page,@per_page)
     @categories = set_orders(params,@categories)
-    render json: @categories,status: :ok, include: @include, each_serailizer: SimpleCategorySerializer, fields: set_fields, root: "data",meta: meta_attributes(@categories)
+    render json: @categories,status: :ok, include: @include, each_serailizer: SimpleCategorySerializer, fields: set_fields(params), root: "data",meta: meta_attributes(@categories)
   end
 
   private
-    def set_pagination
-      if params.has_key?(:page)
-        @page = params[:page][:number].to_i
-        @per_page = params[:page][:size].to_i
-      end
-      @page ||= 1
-      @per_page ||= 10
-    end
-
-    def set_fields
-      array = params[:fields].split(",") if params.has_key?(:fields)
-      array ||= []
-      array_s = nil
-      if !array.empty?
-        array_s = []
-      end
-      array.each do |a|
-        array_s.push(a.to_sym)
-      end
-      array_s
-    end
 
     def set_category
       @category = Category.category_by_id(params[:id])
@@ -149,16 +141,6 @@ class Api::V1::CategoriesController < ApplicationController
 
     def category_params
       params.require(:category).permit(:name,:description)
-    end
-
-    def set_orders(params,query)
-      if params.has_key?(:sort)
-        values = params[:sort].split(",")
-        values.each  do |val|
-          query = set_order(val,query)
-        end
-      end
-      query
     end
 
     def set_order(val,query)
@@ -171,15 +153,5 @@ class Api::V1::CategoriesController < ApplicationController
       end
       query
     end
-
-    def set_include
-      temp = params[:include]
-      temp ||= "*"
-      if temp.include? "**"
-        temp = "*"
-      end
-      @include = temp
-    end
-
 
 end
