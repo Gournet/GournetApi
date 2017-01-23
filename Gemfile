@@ -41,8 +41,7 @@ gem 'omniauth'
 gem 'devise'
 #cross-origin
 gem 'rack-cors', :require => 'rack/cors'
-#validator for dates
-gem 'chronic'
+
 
 #for stylezed emails
 gem 'premailer-rails'

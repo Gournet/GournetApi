@@ -141,7 +141,6 @@ class Chef < ActiveRecord::Base
   validates :expertise, length: {in: 10...250}
   validates :speciality, length: {in: 10...250}
   validates_format_of  :mobile, :with => /[0-9]{10,12}/x
-  validate :validate_date?
   validates :type_chef, inclusion: {in: type_chefs.keys}
   validates_integrity_of :avatar
   validates_processing_of :avatar
@@ -174,10 +173,6 @@ class Chef < ActiveRecord::Base
         .limit(3)
     end
 
-    def validate_date?
-      unless Chronic.parse(:day)
-        errors.add(:birthday, "is missing or invalid")
-      end
-    end
+
 
 end

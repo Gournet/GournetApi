@@ -166,7 +166,6 @@ class User < ActiveRecord::Base
   validates_presence_of :avatar
   validates :birthday,:mobile, presence: true
   validates_format_of :mobile, :with => /[0-9]{10,12}/x
-  validate :validate_date?
   validates_integrity_of :avatar
   validates_processing_of :avatar
 
@@ -202,12 +201,6 @@ class User < ActiveRecord::Base
   end
 
   protected
-
-  def validate_date?
-    unless Chronic.parse(:day)
-      errors.add(:birthday, "is missing or invalid")
-    end
-  end
 
   def self.best_seller(range)
     joins(:orders).select("users.*")

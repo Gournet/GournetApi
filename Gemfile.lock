@@ -62,7 +62,6 @@ GEM
       activemodel (>= 4.0.0)
       activesupport (>= 4.0.0)
       mime-types (>= 1.16)
-    chronic (0.10.2)
     concurrent-ruby (1.0.3)
     css_parser (1.4.7)
       addressable
@@ -315,7 +314,6 @@ DEPENDENCIES
   awesome_print
   byebug
   carrierwave (~> 1.0)
-  chronic
   devise
   devise_token_auth!
   fog

@@ -9,7 +9,6 @@ class RatingDish < ApplicationRecord
 
 
   validates :rating, presence: true
-  #validates :rating, :in => 0..5
   validates_inclusion_of :rating, :in => 0..5
 
   def self.add_rating(user_id,dish_id,rating)

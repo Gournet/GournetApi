@@ -1,5 +1,5 @@
 class CommentVote < ApplicationRecord
-  belongs_to :user
+  belongs_to :user, optional: true
   belongs_to :comment
 
   def self.add_vote(user_id,comment_id,vote = 1)

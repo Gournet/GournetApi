@@ -152,10 +152,10 @@ class Order < ApplicationRecord
     Order.query_orders_dish(dish,range,page,per_page)
   end
 
-  belongs_to :address
-  belongs_to :user
-  belongs_to :dish
-  belongs_to :chef
+  belongs_to :address, optional: true
+  belongs_to :user, optional: true
+  belongs_to :dish, optional: true
+  belongs_to :chef, optional: true
 
   enum payment_type: {
     :card => 0,

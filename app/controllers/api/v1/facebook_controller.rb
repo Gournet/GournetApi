@@ -33,7 +33,7 @@ class Api::V1::FacebookController < ApplicationController
   def resource_data(user,opts={})
     response_data = opts[:resource_json] || user.as_json
     if is_json_api
-      response_data['type'] = @resource.class.name.parameterize
+      response_data['type'] = user.class.name.parameterize
     end
     response_data
   end
@@ -41,6 +41,7 @@ class Api::V1::FacebookController < ApplicationController
   def resource_errors(user)
     return user.errors.to_hash.merge(full_messages: user.errors.full_messages)
   end
+
   def render_success_login(user)
     render json: {
       status: 'success',
