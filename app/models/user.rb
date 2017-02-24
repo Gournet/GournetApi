@@ -3,7 +3,7 @@ class User < ActiveRecord::Base
   devise :database_authenticatable, :registerable,
           :recoverable, :rememberable, :trackable, :validatable,
           :confirmable
-  include DeviseTokenAuth::Concerns::User,Utility
+  include DeviseTokenAuth::Concerns::User, Utility
   mount_uploader :avatar, AvatarUploader
 
   default_scope {order("users.name ASC, users.lastname ASC")}
